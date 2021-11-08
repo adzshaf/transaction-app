@@ -1,6 +1,13 @@
 import * as React from 'react';
 import {View, Button, FlatList, StyleSheet} from 'react-native';
-import {FAB, Title, Text, Subheading, useTheme} from 'react-native-paper';
+import {
+  FAB,
+  Title,
+  Text,
+  Subheading,
+  useTheme,
+  Colors,
+} from 'react-native-paper';
 
 const items = [
   {
@@ -50,7 +57,9 @@ function HomeScreen({navigation}) {
                 <Text
                   style={{
                     color:
-                      item.type === 'Income' ? '#0d47a1' : colors.notification,
+                      item.type === 'Income'
+                        ? Colors.blue900
+                        : colors.notification,
                   }}>
                   Amount: {item.amount}
                 </Text>
@@ -63,7 +72,7 @@ function HomeScreen({navigation}) {
       <FAB
         style={styles.fab}
         icon="plus"
-        onPress={() => console.log('Pressed')}
+        onPress={() => navigation.navigate('Create')}
       />
     </>
   );
