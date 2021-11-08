@@ -11,10 +11,18 @@ import {
   Button,
 } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {useForm, Controller} from 'react-hook-form';
 
 function CreateScreen({navigation}) {
-  const [value, setValue] = React.useState('Income');
-  const [category, setCategory] = React.useState('Food');
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    formState: {errors},
+  } = useForm();
+  const onSubmit = data => console.log(data);
+
   const {colors} = useTheme();
   const styles = makeStyles(colors);
 
@@ -59,47 +67,101 @@ function CreateScreen({navigation}) {
           onChange={onChange}
         />
       )}
-      <TextInput label="Amount" />
+      <Controller
+        control={control}
+        rules={{
+          required: true,
+        }}
+        render={({field: {onChange, onBlur, value}}) => {
+          return (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={value => onChange(value)}
+              value={value}
+              label="Amount"
+            />
+          );
+        }}
+        name="amount"
+        defaultValue=""
+      />
       <View>
         <Caption>Type</Caption>
-        <RadioButton.Group
-          onValueChange={newValue => setValue(newValue)}
-          value={value}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <RadioButton value="Income" />
-            <Text>Income</Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <RadioButton value="Expense" />
-            <Text>Expense</Text>
-          </View>
-        </RadioButton.Group>
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+          }}
+          render={({field: {onChange, onBlur, value}}) => (
+            <RadioButton.Group
+              onValueChange={newValue => onChange(newValue)}
+              value={value}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <RadioButton value="Income" />
+                <Text>Income</Text>
+              </View>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <RadioButton value="Expense" />
+                <Text>Expense</Text>
+              </View>
+            </RadioButton.Group>
+          )}
+          name="type"
+        />
       </View>
       <View>
         <Caption>Category</Caption>
-        <RadioButton.Group
-          onValueChange={newValue => setCategory(newValue)}
-          value={category}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <RadioButton value="Food" />
-            <Text>Food</Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <RadioButton value="Holiday" />
-            <Text>Holiday</Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <RadioButton value="Culture" />
-            <Text>Culture</Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <RadioButton value="Health" />
-            <Text>Health</Text>
-          </View>
-        </RadioButton.Group>
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+          }}
+          render={({field: {onChange, onBlur, value}}) => (
+            <RadioButton.Group
+              onValueChange={newValue => onChange(newValue)}
+              value={value}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <RadioButton value="Food" />
+                <Text>Food</Text>
+              </View>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <RadioButton value="Holiday" />
+                <Text>Holiday</Text>
+              </View>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <RadioButton value="Culture" />
+                <Text>Culture</Text>
+              </View>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <RadioButton value="Health" />
+                <Text>Health</Text>
+              </View>
+            </RadioButton.Group>
+          )}
+          name="category"
+        />
       </View>
-      <TextInput label="Note" />
-      <Button mode="contained">Save</Button>
+      <Controller
+        control={control}
+        rules={{
+          required: false,
+        }}
+        render={({field: {onChange, onBlur, value}}) => (
+          <TextInput
+            style={styles.input}
+            onBlur={onBlur}
+            onChangeText={onChange}
+            value={value}
+            label="Note"
+          />
+        )}
+        name="note"
+        defaultValue=""
+      />
+      <Button mode="contained" title="Submit" onPress={handleSubmit(onSubmit)}>
+        Save
+      </Button>
     </View>
   );
 }
