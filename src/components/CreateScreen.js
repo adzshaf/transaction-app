@@ -12,6 +12,10 @@ import {
 } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useForm, Controller} from 'react-hook-form';
+import {createTransaction} from '../repository/transaction';
+import {openDatabase} from 'react-native-sqlite-storage';
+
+var db = openDatabase({name: 'transactionDatabase.db'});
 
 function CreateScreen({navigation}) {
   const {
@@ -21,7 +25,23 @@ function CreateScreen({navigation}) {
     watch,
     formState: {errors},
   } = useForm();
-  const onSubmit = data => console.log(data);
+
+  const onSubmit = data => {
+    let {amount, type, category, note} = data;
+    console.log(data);
+    db.transaction(function (tx) {
+      tx.executeSql(
+        'INSERT INTO table_transaction (date, amount, type, category, note) VALUES (?,?,?,?,?)',
+        [new Date().toISOString(), amount, type, category, note],
+        (tx, results) => {
+          console.log('Results', results.rowsAffected);
+          if (results.rowsAffected > 0) {
+            navigation.navigate('Home');
+          }
+        },
+      );
+    });
+  };
 
   const {colors} = useTheme();
   const styles = makeStyles(colors);

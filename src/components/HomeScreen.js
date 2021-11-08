@@ -8,6 +8,9 @@ import {
   useTheme,
   Colors,
 } from 'react-native-paper';
+import {openDatabase} from 'react-native-sqlite-storage';
+
+var db = openDatabase({name: 'transactionDatabase.db'});
 
 const items = [
   {
@@ -37,15 +40,46 @@ const items = [
 function HomeScreen({navigation}) {
   const {colors} = useTheme();
   const styles = makeStyles(colors);
+
+  const [flatListItems, setFlatListItems] = React.useState([]);
+
+  React.useEffect(() => {
+    db.transaction(function (txn) {
+      // txn.executeSql(
+      //   "SELECT name FROM sqlite_master WHERE type='table' AND name='table_transaction'",
+      //   [],
+      //   function (tx, res) {
+      //     console.log('item:', res.rows);
+      //     if (res.rows.length == 0) {
+      //       txn.executeSql('DROP TABLE IF EXISTS table_transaction', []);
+      //       txn.executeSql(
+      //         'CREATE TABLE IF NOT EXISTS table_transaction(transaction_id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, amount INT, type VARCHAR(30), category VARCHAR(30), note VARCHAR(255))',
+      //         [],
+      //       );
+      //     }
+      //   },
+      // );
+      txn.executeSql('SELECT * FROM table_transaction', [], (tx, results) => {
+        let temp = [];
+        for (let i = 0; i < results.rows.length; ++i) {
+          temp.push(results.rows.item(i));
+        }
+        console.log(temp);
+        console.log(temp.length);
+        setFlatListItems(temp);
+      });
+    });
+  }, []);
+
   return (
     <>
       <FlatList
         style={styles.container}
-        data={items}
+        data={flatListItems}
         renderItem={({item}) => (
           <View style={styles.row}>
             <Subheading>
-              {new Date(item.occured_at).toLocaleDateString('id-ID')}
+              {new Date(item.date).toLocaleDateString('id-ID')}
             </Subheading>
             <View style={styles.col}>
               <View>
@@ -67,7 +101,7 @@ function HomeScreen({navigation}) {
             </View>
           </View>
         )}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.transaction_id}
       />
       <FAB
         style={styles.fab}
