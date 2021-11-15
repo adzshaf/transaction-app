@@ -41,6 +41,20 @@ function EditScreen({route, navigation}) {
     });
   };
 
+  const deleteTransaction = () => {
+    db.transaction(function (tx) {
+      tx.executeSql(
+        'DELETE FROM table_transaction WHERE transaction_id = ?',
+        [transactionId],
+        (tx, results) => {
+          if (results.rowsAffected > 0) {
+            navigation.push('Home');
+          }
+        },
+      );
+    });
+  };
+
   const {colors} = useTheme();
   const styles = makeStyles(colors);
 
@@ -207,6 +221,8 @@ function EditScreen({route, navigation}) {
       <Button mode="contained" title="Submit" onPress={handleSubmit(onSubmit)}>
         Save
       </Button>
+
+      <Button onPress={() => deleteTransaction()}>Delete</Button>
     </View>
   );
 }
