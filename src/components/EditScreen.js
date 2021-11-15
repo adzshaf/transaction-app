@@ -9,15 +9,15 @@ import {
   TextInput,
   RadioButton,
   Button,
+  ActivityIndicator,
 } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useForm, Controller} from 'react-hook-form';
-import {createTransaction} from '../repository/transaction';
 import {openDatabase} from 'react-native-sqlite-storage';
 
 var db = openDatabase({name: 'transactionDatabase.db'});
 
-function CreateScreen({navigation}) {
+function EditScreen({route, navigation}) {
   const {
     control,
     register,
@@ -30,8 +30,8 @@ function CreateScreen({navigation}) {
     let {amount, type, category, note} = data;
     db.transaction(function (tx) {
       tx.executeSql(
-        'INSERT INTO table_transaction (date, amount, type, category, note) VALUES (?,?,?,?,?)',
-        [new Date().toISOString(), amount, type, category, note],
+        'UPDATE table_transaction SET date = ?, amount = ?, type = ?, category = ?, note = ? WHERE transaction_id = ?',
+        [new Date().toISOString(), amount, type, category, note, transactionId],
         (tx, results) => {
           if (results.rowsAffected > 0) {
             navigation.push('Home');
@@ -67,7 +67,32 @@ function CreateScreen({navigation}) {
     showMode('time');
   };
 
-  return (
+  const {transactionId} = route.params;
+  const [defaultData, setDefaultData] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    db.transaction(function (txn) {
+      txn.executeSql(
+        'SELECT * FROM table_transaction WHERE transaction_id = ?',
+        [transactionId],
+        (tx, results) => {
+          let temp = [];
+          for (let i = 0; i < results.rows.length; ++i) {
+            temp.push(results.rows.item(i));
+          }
+
+          if (temp.length > 0) {
+            setDefaultData(temp[0]);
+          }
+        },
+      );
+    });
+  }, []);
+
+  return defaultData === null ? (
+    <ActivityIndicator />
+  ) : (
     <View style={styles.container}>
       <Caption>Date</Caption>
       <View>
@@ -88,7 +113,7 @@ function CreateScreen({navigation}) {
       <Controller
         control={control}
         rules={{
-          required: true,
+          required: false,
         }}
         render={({field: {onChange, onBlur, value}}) => {
           return (
@@ -102,14 +127,14 @@ function CreateScreen({navigation}) {
           );
         }}
         name="amount"
-        defaultValue=""
+        defaultValue={defaultData.amount.toString()}
       />
       <View>
         <Caption>Type</Caption>
         <Controller
           control={control}
           rules={{
-            required: true,
+            required: false,
           }}
           render={({field: {onChange, onBlur, value}}) => (
             <RadioButton.Group
@@ -126,6 +151,7 @@ function CreateScreen({navigation}) {
             </RadioButton.Group>
           )}
           name="type"
+          defaultValue={defaultData.type}
         />
       </View>
       <View>
@@ -133,7 +159,7 @@ function CreateScreen({navigation}) {
         <Controller
           control={control}
           rules={{
-            required: true,
+            required: false,
           }}
           render={({field: {onChange, onBlur, value}}) => (
             <RadioButton.Group
@@ -158,6 +184,7 @@ function CreateScreen({navigation}) {
             </RadioButton.Group>
           )}
           name="category"
+          defaultValue={defaultData.category}
         />
       </View>
       <Controller
@@ -175,7 +202,7 @@ function CreateScreen({navigation}) {
           />
         )}
         name="note"
-        defaultValue=""
+        defaultValue={defaultData.note}
       />
       <Button mode="contained" title="Submit" onPress={handleSubmit(onSubmit)}>
         Save
@@ -208,4 +235,4 @@ const makeStyles = colors =>
     },
   });
 
-export default CreateScreen;
+export default EditScreen;

@@ -1,9 +1,9 @@
 import * as React from 'react';
-import {View, Text, Button} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from './src/components/HomeScreen';
 import Form from './src/components/CreateScreen';
+import EditForm from './src/components/EditScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -16,6 +16,11 @@ function App() {
           name="Create"
           component={Form}
           options={{title: 'Create Transaction'}}
+        />
+        <Stack.Screen
+          name="Edit"
+          component={EditForm}
+          options={{title: 'Edit Transaction'}}
         />
       </Stack.Navigator>
     </NavigationContainer>

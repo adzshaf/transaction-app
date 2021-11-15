@@ -1,5 +1,11 @@
 import * as React from 'react';
-import {View, Button, FlatList, StyleSheet} from 'react-native';
+import {
+  View,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import {
   FAB,
   Title,
@@ -11,31 +17,6 @@ import {
 import {openDatabase} from 'react-native-sqlite-storage';
 
 var db = openDatabase({name: 'transactionDatabase.db'});
-
-const items = [
-  {
-    id: '0',
-    occured_at: 1635797174618,
-    amount: 2000,
-    type: 'Income',
-    note: 'haha',
-    category: 'Health',
-  },
-  {
-    id: '1',
-    occured_at: 1635797174618,
-    amount: 3000,
-    type: 'Expense',
-    category: 'Holiday',
-  },
-  {
-    id: '2',
-    occured_at: 1635797174618,
-    amount: 400,
-    type: 'Income',
-    category: 'Culture',
-  },
-];
 
 function HomeScreen({navigation}) {
   const {colors} = useTheme();
@@ -78,27 +59,34 @@ function HomeScreen({navigation}) {
         data={flatListItems}
         renderItem={({item}) => (
           <View style={styles.row}>
-            <Subheading>
-              {new Date(item.date).toLocaleDateString('id-ID')}
-            </Subheading>
-            <View style={styles.col}>
-              <View>
-                <Text>Type: {item.type}</Text>
-                <Text>Category: {item.category}</Text>
-                <Text>Note: {item.note ? item.note : '-'}</Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('Edit', {
+                  transactionId: item.transaction_id,
+                })
+              }>
+              <Subheading>
+                {new Date(item.date).toLocaleDateString('id-ID')}
+              </Subheading>
+              <View style={styles.col}>
+                <View>
+                  <Text>Type: {item.type}</Text>
+                  <Text>Category: {item.category}</Text>
+                  <Text>Note: {item.note ? item.note : '-'}</Text>
+                </View>
+                <View>
+                  <Text
+                    style={{
+                      color:
+                        item.type === 'Income'
+                          ? Colors.blue900
+                          : colors.notification,
+                    }}>
+                    Amount: {item.amount}
+                  </Text>
+                </View>
               </View>
-              <View>
-                <Text
-                  style={{
-                    color:
-                      item.type === 'Income'
-                        ? Colors.blue900
-                        : colors.notification,
-                  }}>
-                  Amount: {item.amount}
-                </Text>
-              </View>
-            </View>
+            </TouchableOpacity>
           </View>
         )}
         keyExtractor={item => item.transaction_id}
