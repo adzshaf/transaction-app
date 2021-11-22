@@ -11,9 +11,9 @@ import {
   Button,
   ActivityIndicator,
 } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import {useForm, Controller} from 'react-hook-form';
 import {openDatabase} from 'react-native-sqlite-storage';
+import DatePicker from 'react-native-date-picker';
 
 var db = openDatabase({name: 'transactionDatabase.db'});
 
@@ -27,11 +27,11 @@ function EditScreen({route, navigation}) {
   } = useForm();
 
   const onSubmit = data => {
-    let {amount, type, category, note} = data;
+    let {date, amount, type, category, note} = data;
     db.transaction(function (tx) {
       tx.executeSql(
         'UPDATE table_transaction SET date = ?, amount = ?, type = ?, category = ?, note = ? WHERE transaction_id = ?',
-        [new Date().toISOString(), amount, type, category, note, transactionId],
+        [date.toISOString(), amount, type, category, note, transactionId],
         (tx, results) => {
           if (results.rowsAffected > 0) {
             navigation.push('Home');
@@ -59,8 +59,7 @@ function EditScreen({route, navigation}) {
   const styles = makeStyles(colors);
 
   const [date, setDate] = React.useState(new Date());
-  const [mode, setMode] = React.useState('date');
-  const [show, setShow] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
@@ -71,14 +70,6 @@ function EditScreen({route, navigation}) {
   const showMode = currentMode => {
     setShow(true);
     setMode(currentMode);
-  };
-
-  const showDatepicker = () => {
-    showMode('date');
-  };
-
-  const showTimepicker = () => {
-    showMode('time');
   };
 
   const {transactionId} = route.params;
@@ -98,6 +89,7 @@ function EditScreen({route, navigation}) {
 
           if (temp.length > 0) {
             setDefaultData(temp[0]);
+            setDate(new Date(temp[0].date));
           }
         },
       );
@@ -110,20 +102,35 @@ function EditScreen({route, navigation}) {
     <View style={styles.container}>
       <Caption>Date</Caption>
       <View>
-        <Text onPress={showDatepicker}>
+        <Text onPress={() => setOpen(true)}>
           {new Date(date).toLocaleDateString('id-ID')}
         </Text>
       </View>
-      {show && (
-        <DateTimePicker
-          testID="dateTimePicker"
-          value={date}
-          mode={mode}
-          is24Hour={true}
-          display="default"
-          onChange={onChange}
-        />
-      )}
+      <Controller
+        control={control}
+        rules={{
+          required: true,
+        }}
+        render={({field: {onChange, onBlur, value}}) => (
+          <DatePicker
+            modal
+            open={open}
+            date={new Date(defaultData.date)}
+            onConfirm={valueDate => {
+              setOpen(false);
+              setDate(valueDate);
+              onChange(valueDate);
+              console.log(valueDate);
+            }}
+            onCancel={() => {
+              setOpen(false);
+            }}
+            mode="date"
+          />
+        )}
+        name="date"
+        defaultValue={defaultData.date}
+      />
       <Controller
         control={control}
         rules={{
