@@ -14,6 +14,8 @@ import {useForm, Controller} from 'react-hook-form';
 import {createTransaction} from '../repository/transaction';
 import {openDatabase} from 'react-native-sqlite-storage';
 import DatePicker from 'react-native-date-picker';
+import 'react-native-get-random-values';
+import {v4 as uuidv4} from 'uuid';
 
 var db = openDatabase({name: 'transactionDatabase.db'});
 
@@ -27,16 +29,22 @@ function CreateScreen({navigation}) {
   } = useForm();
 
   const onSubmit = data => {
-    let {date, amount, type, category, note} = data;
+    let insertData = {...data, event_type: 'ADD_TRANSACTION'};
     db.transaction(function (tx) {
+      // tx.executeSql(
+      //   'INSERT INTO table_transaction (date, amount, type, category, note) VALUES (?,?,?,?,?)',
+      //   [date.toISOString(), amount, type, category, note],
+      //   (tx, results) => {
+      //     insertId = results.insertId;
+      //   },
+      // );
       tx.executeSql(
-        'INSERT INTO table_transaction (date, amount, type, category, note) VALUES (?,?,?,?,?)',
-        [date.toISOString(), amount, type, category, note],
+        'INSERT INTO table_event (stream_id, version, data) VALUES (?,?,?)',
+        [uuidv4(), 1, JSON.stringify(insertData)],
         (tx, results) => {
-          if (results.rowsAffected > 0) {
-            navigation.push('Home');
-          }
+          navigation.push('Home');
         },
+        error => console.log(error),
       );
     });
   };
