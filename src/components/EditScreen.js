@@ -103,8 +103,6 @@ function EditScreen({route, navigation}) {
     });
   }, []);
 
-  console.log(defaultData);
-
   return defaultData === null ? (
     <ActivityIndicator />
   ) : (

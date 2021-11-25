@@ -6,14 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import {
-  FAB,
-  Title,
-  Text,
-  Subheading,
-  useTheme,
-  Colors,
-} from 'react-native-paper';
+import {FAB, Text, Subheading, useTheme, Colors} from 'react-native-paper';
 import {openDatabase} from 'react-native-sqlite-storage';
 
 var db = openDatabase({name: 'transactionDatabase.db'});
@@ -31,18 +24,19 @@ function HomeScreen({navigation}) {
         [],
       );
       txn.executeSql(
-        "select * from table_event WHERE (stream_id, version) in (SELECT stream_id, max(version) FROM table_event where name <> 'DELETE_TRANSACTION' GROUP BY stream_id) AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')",
+        "select id, stream_id, JSON_EXTRACT(data, '$') from table_event WHERE (stream_id, version) in (SELECT stream_id, max(version) FROM table_event where name <> 'DELETE_TRANSACTION'\
+        GROUP BY stream_id) AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
+        ORDER BY JSON_EXTRACT(data, '$.date') DESC",
         [],
         (tx, results) => {
           let temp = [];
           for (let i = 0; i < results.rows.length; ++i) {
-            let data = JSON.parse(results.rows.item(i).data);
-            let streamId = results.rows.item(i)['stream_id'];
-            let id = results.rows.item(i)['id'];
-            data['stream_id'] = streamId;
-            data['id'] = id;
+            let data = JSON.parse(
+              results.rows.item(i)["JSON_EXTRACT(data, '$')"],
+            );
+            data['stream_id'] = results.rows.item(i)['stream_id'];
+            data['id'] = results.rows.item(i)['id'];
             temp.push(data);
-            console.log(results.rows.item(i));
           }
           setFlatListItems(temp);
         },
