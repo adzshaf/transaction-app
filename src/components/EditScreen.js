@@ -1,8 +1,6 @@
 import * as React from 'react';
 import {View, StyleSheet} from 'react-native';
 import {
-  FAB,
-  Title,
   Text,
   Caption,
   useTheme,
@@ -82,40 +80,30 @@ function EditScreen({route, navigation}) {
   const [date, setDate] = React.useState(new Date());
   const [open, setOpen] = React.useState(false);
 
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setShow(Platform.OS === 'ios');
-    setDate(currentDate);
-  };
-
-  const showMode = currentMode => {
-    setShow(true);
-    setMode(currentMode);
-  };
-
   const {transactionId} = route.params;
   const [defaultData, setDefaultData] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
     db.transaction(function (txn) {
       txn.executeSql(
-        'SELECT * FROM table_event WHERE stream_id = ?',
+        "SELECT JSON_EXTRACT(data, '$') FROM table_event WHERE stream_id = ?",
         [transactionId],
         (tx, results) => {
-          let temp = [];
-          for (let i = 0; i < results.rows.length; ++i) {
-            temp.push(JSON.parse(results.rows.item(i).data));
-          }
+          let resultData = JSON.parse(
+            results.rows.item(0)["JSON_EXTRACT(data, '$')"],
+          );
 
-          if (temp.length > 0) {
-            setDefaultData(temp[0]);
-            setDate(new Date(temp[0].date));
-          }
+          setDefaultData(resultData);
+          setDate(resultData['date']);
+        },
+        err => {
+          console.log(err);
         },
       );
     });
   }, []);
+
+  console.log(defaultData);
 
   return defaultData === null ? (
     <ActivityIndicator />
