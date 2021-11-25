@@ -27,17 +27,7 @@ function EditScreen({route, navigation}) {
   } = useForm();
 
   const onSubmit = data => {
-    let editData = {...data, event_type: 'EDIT_TRANSACTION'};
     db.transaction(function (tx) {
-      // tx.executeSql(
-      //   'UPDATE table_transaction SET date = ?, amount = ?, type = ?, category = ?, note = ? WHERE transaction_id = ?',
-      //   [date.toISOString(), amount, type, category, note, transactionId],
-      //   (tx, results) => {
-      //     if (results.rowsAffected > 0) {
-      //       navigation.push('Home');
-      //     }
-      //   },
-      // );
       let version;
       tx.executeSql(
         'SELECT MAX(version) FROM table_event WHERE stream_id = ?',
@@ -45,8 +35,13 @@ function EditScreen({route, navigation}) {
         (tx, results) => {
           version = results.rows.item(0)['MAX(version)'];
           tx.executeSql(
-            'INSERT INTO table_event (stream_id, version, data) VALUES (?,?,?)',
-            [transactionId, version + 1, JSON.stringify(editData)],
+            'INSERT INTO table_event (stream_id, version, data, name) VALUES (?,?,?,?)',
+            [
+              transactionId,
+              version + 1,
+              JSON.stringify(data),
+              'EDIT_TRANSACTION',
+            ],
             (tx, results) => {
               navigation.push('Home');
             },
@@ -58,28 +53,20 @@ function EditScreen({route, navigation}) {
 
   const deleteTransaction = () => {
     db.transaction(function (tx) {
-      // tx.executeSql(
-      //   'DELETE FROM table_transaction WHERE transaction_id = ?',
-      //   [transactionId],
-      //   (tx, results) => {
-      //     if (results.rowsAffected > 0) {
-      //       navigation.push('Home');
-      //     }
-      //   },
-      // );
       let version;
       tx.executeSql(
         'SELECT * FROM table_event WHERE stream_id = ? AND version = (SELECT MAX(VERSION) FROM table_event WHERE stream_id = ?)',
         [transactionId, transactionId],
         (tx, results) => {
-          let data = {
-            ...JSON.parse(results.rows.item(0).data),
-            event_type: 'DELETE_TRANSACTION',
-          };
           version = results.rows.item(0).version;
           tx.executeSql(
-            'INSERT INTO table_event (stream_id, version, data) VALUES (?,?,?)',
-            [transactionId, version + 1, JSON.stringify(data)],
+            'INSERT INTO table_event (stream_id, version, data, name) VALUES (?,?,?,?)',
+            [
+              transactionId,
+              version + 1,
+              results.rows.item(0).data,
+              'DELETE_TRANSACTION',
+            ],
             (tx, results) => {
               navigation.push('Home');
             },

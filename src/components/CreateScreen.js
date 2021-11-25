@@ -29,18 +29,10 @@ function CreateScreen({navigation}) {
   } = useForm();
 
   const onSubmit = data => {
-    let insertData = {...data, event_type: 'ADD_TRANSACTION'};
     db.transaction(function (tx) {
-      // tx.executeSql(
-      //   'INSERT INTO table_transaction (date, amount, type, category, note) VALUES (?,?,?,?,?)',
-      //   [date.toISOString(), amount, type, category, note],
-      //   (tx, results) => {
-      //     insertId = results.insertId;
-      //   },
-      // );
       tx.executeSql(
-        'INSERT INTO table_event (stream_id, version, data) VALUES (?,?,?)',
-        [uuidv4(), 1, JSON.stringify(insertData)],
+        'INSERT INTO table_event (stream_id, version, data, name) VALUES (?,?,?,?)',
+        [uuidv4(), 1, JSON.stringify(data), 'ADD_TRANSACTION'],
         (tx, results) => {
           navigation.push('Home');
         },
