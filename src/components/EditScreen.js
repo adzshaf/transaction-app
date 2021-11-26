@@ -127,7 +127,6 @@ function EditScreen({route, navigation}) {
               setOpen(false);
               setDate(valueDate);
               onChange(valueDate);
-              console.log(valueDate);
             }}
             onCancel={() => {
               setOpen(false);
