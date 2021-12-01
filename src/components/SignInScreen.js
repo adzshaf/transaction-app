@@ -7,10 +7,13 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import {CLIENT_ID} from '@env';
+import {useDispatch} from 'react-redux';
+import {login} from '../store/auth';
 
-const SignInScreen = () => {
+const SignInScreen = ({navigation}) => {
   const {colors} = useTheme();
   const styles = makeStyles(colors);
+  const dispatch = useDispatch();
 
   const signIn = async () => {
     GoogleSignin.configure({
@@ -18,13 +21,13 @@ const SignInScreen = () => {
       offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
       profileImageSize: 120, // [iOS] The desired height (and width) of the profile image. Defaults to 120px
     });
-    console.log(CLIENT_ID);
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const accessToken = userInfo.idToken;
       const user = userInfo.user;
-      console.log('userinfo', userInfo);
+      dispatch(login({token: accessToken, email: user.email}));
+      navigation.navigate('Home', {});
     } catch (error) {
       console.log(error);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
