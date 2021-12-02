@@ -6,7 +6,6 @@ import {
   GoogleSigninButton,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import {CLIENT_ID} from '@env';
 import {useDispatch} from 'react-redux';
 import {login} from '../store/auth';
 
@@ -16,17 +15,18 @@ const SignInScreen = ({navigation}) => {
   const dispatch = useDispatch();
 
   const signIn = async () => {
-    GoogleSignin.configure({
-      webClientId: CLIENT_ID,
-      offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
-      profileImageSize: 120, // [iOS] The desired height (and width) of the profile image. Defaults to 120px
-    });
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      const accessToken = userInfo.idToken;
+      const {idToken, accessToken} = await GoogleSignin.getTokens();
       const user = userInfo.user;
-      dispatch(login({token: accessToken, email: user.email}));
+      dispatch(
+        login({
+          token: idToken,
+          email: user.email,
+          accessToken: accessToken,
+        }),
+      );
       navigation.navigate('Home', {});
     } catch (error) {
       console.log(error);

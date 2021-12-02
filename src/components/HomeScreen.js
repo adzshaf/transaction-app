@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import {FAB, Text, Subheading, useTheme, Colors} from 'react-native-paper';
 import {openDatabase} from 'react-native-sqlite-storage';
+import {getToken} from '../store/auth';
+import {useSelector} from 'react-redux';
 
 var db = openDatabase({name: 'transactionDatabase.db'});
 
@@ -16,6 +18,8 @@ function HomeScreen({navigation}) {
   const styles = makeStyles(colors);
 
   const [flatListItems, setFlatListItems] = React.useState([]);
+  const token = useSelector(getToken);
+  console.log('token', token);
 
   React.useEffect(() => {
     db.transaction(function (txn) {

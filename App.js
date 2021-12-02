@@ -6,8 +6,16 @@ import Form from './src/components/CreateScreen';
 import EditForm from './src/components/EditScreen';
 import CustomNavigationBar from './src/components/CustomNavigationBar';
 import SignIn from './src/components/SignInScreen';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {CLIENT_ID} from '@env';
 
 const Stack = createNativeStackNavigator();
+
+GoogleSignin.configure({
+  webClientId: CLIENT_ID,
+  offlineAccess: true,
+  profileImageSize: 120,
+});
 
 function App() {
   return (

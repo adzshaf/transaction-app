@@ -1,13 +1,32 @@
 import * as React from 'react';
 import {Appbar, Menu} from 'react-native-paper';
-import {isLoggedIn} from '../store/auth';
+import {isLoggedIn, getAccessToken, updateToken} from '../store/auth';
 import {useSelector} from 'react-redux';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {useDispatch} from 'react-redux';
+import {logout} from '../store/auth';
 
 function CustomNavigationBar({navigation, back}) {
   const [visible, setVisible] = React.useState(false);
   const openMenu = () => setVisible(true);
   const closeMenu = () => setVisible(false);
   const loggedIn = useSelector(isLoggedIn);
+  const accessTokenState = useSelector(getAccessToken);
+  const dispatch = useDispatch();
+
+  const sync = async () => {
+    await GoogleSignin.clearCachedAccessToken(accessTokenState);
+    const {idToken, accessToken} = await GoogleSignin.getTokens();
+    dispatch(updateToken({token: idToken, accessToken: accessToken}));
+  };
+
+  const signOut = async () => {
+    try {
+      dispatch(logout());
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <Appbar.Header>
@@ -21,12 +40,7 @@ function CustomNavigationBar({navigation, back}) {
             <Appbar.Action icon="menu" color="white" onPress={openMenu} />
           }>
           {loggedIn ? (
-            <Menu.Item
-              onPress={() => {
-                navigation.navigate('SignIn');
-              }}
-              title="Sync"
-            />
+            <Menu.Item title="Sync" onPress={() => sync()} />
           ) : (
             <Menu.Item
               onPress={() => {
@@ -35,7 +49,7 @@ function CustomNavigationBar({navigation, back}) {
               title="Sign in"
             />
           )}
-          {loggedIn && <Menu.Item title="Sign out" />}
+          {loggedIn && <Menu.Item title="Sign out" onPress={() => signOut()} />}
         </Menu>
       ) : null}
     </Appbar.Header>
