@@ -1,17 +1,11 @@
 import * as React from 'react';
-import {
-  View,
-  Button,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import {View, FlatList, StyleSheet, TouchableOpacity} from 'react-native';
 import {FAB, Text, Subheading, useTheme, Colors} from 'react-native-paper';
 import {openDatabase} from 'react-native-sqlite-storage';
 import {getToken} from '../store/auth';
 import {useSelector} from 'react-redux';
 
-var db = openDatabase({name: 'transactionDatabase.db'});
+var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 
 function HomeScreen({navigation}) {
   const {colors} = useTheme();
@@ -24,11 +18,7 @@ function HomeScreen({navigation}) {
   React.useEffect(() => {
     db.transaction(function (txn) {
       txn.executeSql(
-        'CREATE TABLE IF NOT EXISTS table_event(id INTEGER PRIMARY KEY AUTOINCREMENT, stream_id VARCHAR(36), version INTEGER, data TEXT, name VARCHAR(50))',
-        [],
-      );
-      txn.executeSql(
-        "select id, stream_id, JSON_EXTRACT(data, '$') from table_event WHERE (stream_id, version) in (SELECT stream_id, max(version) FROM table_event where name <> 'DELETE_TRANSACTION'\
+        "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event WHERE (stream_id, version) in (SELECT stream_id, max(version) FROM table_event where name <> 'DELETE_TRANSACTION'\
         GROUP BY stream_id) AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
         ORDER BY JSON_EXTRACT(data, '$.date') DESC",
         [],
@@ -44,6 +34,7 @@ function HomeScreen({navigation}) {
           }
           setFlatListItems(temp);
         },
+        error => console.log(error),
       );
     });
   }, []);

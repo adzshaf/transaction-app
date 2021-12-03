@@ -12,8 +12,10 @@ import {
 import {useForm, Controller} from 'react-hook-form';
 import {openDatabase} from 'react-native-sqlite-storage';
 import DatePicker from 'react-native-date-picker';
+import {getEmail} from '../store/auth';
+import {useSelector} from 'react-redux';
 
-var db = openDatabase({name: 'transactionDatabase.db'});
+var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 
 function EditScreen({route, navigation}) {
   const {
@@ -24,6 +26,8 @@ function EditScreen({route, navigation}) {
     formState: {errors},
   } = useForm();
 
+  const email = useSelector(getEmail);
+
   const onSubmit = data => {
     db.transaction(function (tx) {
       let version;
@@ -33,12 +37,13 @@ function EditScreen({route, navigation}) {
         (tx, results) => {
           version = results.rows.item(0)['MAX(version)'];
           tx.executeSql(
-            'INSERT INTO table_event (stream_id, version, data, name) VALUES (?,?,?,?)',
+            'INSERT INTO table_event (stream_id, version, data, name, email) VALUES (?,?,?,?,?)',
             [
               transactionId,
               version + 1,
               JSON.stringify(data),
               'EDIT_TRANSACTION',
+              email,
             ],
             (tx, results) => {
               navigation.push('Home');
@@ -58,7 +63,7 @@ function EditScreen({route, navigation}) {
         (tx, results) => {
           version = results.rows.item(0).version;
           tx.executeSql(
-            'INSERT INTO table_event (stream_id, version, data, name) VALUES (?,?,?,?)',
+            'INSERT INTO table_event (stream_id, version, data, name, email) VALUES (?,?,?,?, ?)',
             [
               transactionId,
               version + 1,

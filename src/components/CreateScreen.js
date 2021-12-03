@@ -16,8 +16,10 @@ import {openDatabase} from 'react-native-sqlite-storage';
 import DatePicker from 'react-native-date-picker';
 import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
+import {getEmail} from '../store/auth';
+import {useSelector} from 'react-redux';
 
-var db = openDatabase({name: 'transactionDatabase.db'});
+var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 
 function CreateScreen({navigation}) {
   const {
@@ -28,11 +30,13 @@ function CreateScreen({navigation}) {
     formState: {errors},
   } = useForm();
 
+  const email = useSelector(getEmail);
+
   const onSubmit = data => {
     db.transaction(function (tx) {
       tx.executeSql(
-        'INSERT INTO table_event (stream_id, version, data, name) VALUES (?,?,?,?)',
-        [uuidv4(), 1, JSON.stringify(data), 'ADD_TRANSACTION'],
+        'INSERT INTO table_event (stream_id, version, data, name, email) VALUES (?,?,?,?,?)',
+        [uuidv4(), 1, JSON.stringify(data), 'ADD_TRANSACTION', email],
         (tx, results) => {
           navigation.push('Home');
         },
