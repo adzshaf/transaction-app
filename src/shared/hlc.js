@@ -57,4 +57,23 @@ class HLC {
       };
     }
   }
+
+  toString() {
+    return (
+      this.ts.toString().padStart(15, '0') +
+      ':' +
+      this.count.toString(36).padStart(5, '0') +
+      ':' +
+      this.node
+    );
+  }
+
+  fromString(str) {
+    const [ts, count, ...node] = str.split(':');
+    return {
+      ts: parseInt(ts),
+      count: parseInt(count, 36),
+      node: node.join(':'),
+    };
+  }
 }

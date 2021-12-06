@@ -12,8 +12,6 @@ function HomeScreen({navigation}) {
   const styles = makeStyles(colors);
 
   const [flatListItems, setFlatListItems] = React.useState([]);
-  const token = useSelector(getToken);
-  console.log('token', token);
 
   React.useEffect(() => {
     db.transaction(function (txn) {
@@ -81,7 +79,7 @@ function HomeScreen({navigation}) {
       <FAB
         style={styles.fab}
         icon="plus"
-        onPress={() => navigation.navigate('Create', {})}
+        onPress={() => navigation.push('Create', {})}
       />
     </>
   );
