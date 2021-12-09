@@ -1,7 +1,7 @@
 class HLC {
-  constructor(now, node) {
+  constructor(now, node, count = 0) {
     this.ts = now;
-    this.count = 0;
+    this.count = count;
     this.node = node;
   }
 
@@ -14,7 +14,7 @@ class HLC {
     }
 
     this.count = this.count + 1;
-    return {ts: this.ts, count: this.count + 1, node: this.node};
+    return {ts: this.ts, count: this.count, node: this.node};
   }
 
   compare(other) {
@@ -41,18 +41,18 @@ class HLC {
       this.count = Math.max(this.count, remote.count) + 1;
       return {
         ts: this.ts,
-        count: Math.max(this.count, remote.count) + 1,
+        count: this.count,
         node: this.node,
       };
     } else if (this.ts > remote.ts) {
       this.count = this.count + 1;
-      return {this: this.ts, count: this.count + 1, node: this.node};
+      return {this: this.ts, count: this.count, node: this.node};
     } else {
       this.ts = remote.ts;
       this.count = remote.count + 1;
       return {
         ts: remote.ts,
-        count: remote.count + 1,
+        count: this.count,
         node: this.node,
       };
     }
@@ -77,3 +77,5 @@ class HLC {
     };
   }
 }
+
+export default HLC;

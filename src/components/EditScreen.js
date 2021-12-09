@@ -14,6 +14,9 @@ import {openDatabase} from 'react-native-sqlite-storage';
 import DatePicker from 'react-native-date-picker';
 import {getEmail} from '../store/auth';
 import {useSelector} from 'react-redux';
+import {update, getTs, getCount, getNode} from '../store/hlc';
+import {toString, increment} from '../shared/hlcFunction';
+import {useDispatch} from 'react-redux';
 
 var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 
@@ -27,23 +30,27 @@ function EditScreen({route, navigation}) {
   } = useForm();
 
   const email = useSelector(getEmail);
+  const ts = useSelector(getTs);
+  const count = useSelector(getCount);
+  const node = useSelector(getNode);
+  const dispatch = useDispatch();
 
   const onSubmit = data => {
+    const incrementResult = increment({ts, count, node}, new Date().getTime());
+    dispatch(update(incrementResult));
     db.transaction(function (tx) {
-      let version;
       tx.executeSql(
-        'SELECT MAX(version) FROM table_event WHERE stream_id = ?',
+        'SELECT MAX(hlc) FROM table_event WHERE stream_id = ?',
         [transactionId],
         (tx, results) => {
-          version = results.rows.item(0)['MAX(version)'];
           tx.executeSql(
-            'INSERT INTO table_event (stream_id, version, data, name, email) VALUES (?,?,?,?,?)',
+            'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
             [
               transactionId,
-              version + 1,
               JSON.stringify(data),
               'EDIT_TRANSACTION',
               email,
+              toString(incrementResult),
             ],
             (tx, results) => {
               navigation.push('Home');
@@ -55,20 +62,23 @@ function EditScreen({route, navigation}) {
   };
 
   const deleteTransaction = () => {
+    const incrementResult = increment({ts, count, node}, new Date().getTime());
+    dispatch(update(incrementResult));
     db.transaction(function (tx) {
       let version;
       tx.executeSql(
-        'SELECT * FROM table_event WHERE stream_id = ? AND version = (SELECT MAX(VERSION) FROM table_event WHERE stream_id = ?)',
+        'SELECT * FROM table_event WHERE stream_id = ? AND hlc = (SELECT MAX(hlc) FROM table_event WHERE stream_id = ?)',
         [transactionId, transactionId],
         (tx, results) => {
           version = results.rows.item(0).version;
           tx.executeSql(
-            'INSERT INTO table_event (stream_id, version, data, name, email) VALUES (?,?,?,?, ?)',
+            'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
             [
               transactionId,
-              version + 1,
               results.rows.item(0).data,
               'DELETE_TRANSACTION',
+              email,
+              toString(incrementResult),
             ],
             (tx, results) => {
               navigation.push('Home');
@@ -91,8 +101,9 @@ function EditScreen({route, navigation}) {
   React.useEffect(() => {
     db.transaction(function (txn) {
       txn.executeSql(
-        "SELECT JSON_EXTRACT(data, '$') FROM table_event WHERE stream_id = ?",
-        [transactionId],
+        "SELECT JSON_EXTRACT(data, '$') FROM table_event \
+        WHERE stream_id = ? AND hlc = (SELECT MAX(hlc) FROM table_event WHERE stream_id = ?)",
+        [transactionId, transactionId],
         (tx, results) => {
           let resultData = JSON.parse(
             results.rows.item(0)["JSON_EXTRACT(data, '$')"],

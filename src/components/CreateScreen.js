@@ -18,6 +18,9 @@ import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
 import {getEmail} from '../store/auth';
 import {useSelector} from 'react-redux';
+import {update, getTs, getCount, getNode} from '../store/hlc';
+import {toString, increment} from '../shared/hlcFunction';
+import {useDispatch} from 'react-redux';
 
 var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 
@@ -31,12 +34,24 @@ function CreateScreen({navigation}) {
   } = useForm();
 
   const email = useSelector(getEmail);
+  const ts = useSelector(getTs);
+  const count = useSelector(getCount);
+  const node = useSelector(getNode);
+  const dispatch = useDispatch();
 
   const onSubmit = data => {
+    const incrementResult = increment({ts, count, node}, new Date().getTime());
+    dispatch(update(incrementResult));
     db.transaction(function (tx) {
       tx.executeSql(
-        'INSERT INTO table_event (stream_id, version, data, name, email) VALUES (?,?,?,?,?)',
-        [uuidv4(), 1, JSON.stringify(data), 'ADD_TRANSACTION', email],
+        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
+        [
+          uuidv4(),
+          JSON.stringify(data),
+          'ADD_TRANSACTION',
+          email,
+          toString(incrementResult),
+        ],
         (tx, results) => {
           navigation.push('Home');
         },

@@ -1,9 +1,9 @@
-import {openDatabase} from 'react-native-sqlite-storage';
+import SQLite from 'react-native-sqlite-storage';
 import axios from 'axios';
 import {BACKEND_URL} from '@env';
 
 const createTransaction = ({amount, type, category, note}) => {
-  var db = openDatabase({name: 'transactionDatabase.db'});
+  var db = SQLite.openDatabase({name: 'transactionDatabase.db'});
 
   db.transaction(function (tx) {
     tx.executeSql(
@@ -19,29 +19,31 @@ const createTransaction = ({amount, type, category, note}) => {
   });
 };
 
-const syncTransaction = email => {
-  var db = openDatabase({
+const syncTransactionToBackend = async email => {
+  var db = SQLite.openDatabase({
     name: 'transactionDatabase.db',
     createFromLocation: 1,
   });
 
-  db.transaction(function (txn) {
-    txn.executeSql(
-      'SELECT * from table_event WHERE email = ?',
-      [email],
-      (tx, results) => {
-        let temp = [];
-        for (let i = 0; i < results.rows.length; ++i) {
-          temp.push(results.rows.item(i));
-        }
-        axios
-          .post(`${BACKEND_URL}/sync`, {data: temp})
-          .then(data => console.log('huhu'))
-          .catch(err => console.log(err));
-      },
-      error => console.log(error),
-    );
-  });
+  return new Promise((resolve, reject) =>
+    db.transaction(txn => {
+      txn.executeSql(
+        'SELECT * from table_event WHERE email = ?',
+        [email],
+        (tx, results) => {
+          let data = [];
+          for (let i = 0; i < results.rows.length; ++i) {
+            data.push(results.rows.item(i));
+          }
+          resolve(data);
+        },
+      );
+    }),
+  );
 };
 
-export {createTransaction, syncTransaction};
+const saveSyncToDatabase = data => {
+  console.log('data', data);
+};
+
+export {createTransaction, syncTransactionToBackend, saveSyncToDatabase};

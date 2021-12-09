@@ -2,7 +2,7 @@ import * as React from 'react';
 import {View, FlatList, StyleSheet, TouchableOpacity} from 'react-native';
 import {FAB, Text, Subheading, useTheme, Colors} from 'react-native-paper';
 import {openDatabase} from 'react-native-sqlite-storage';
-import {getToken} from '../store/auth';
+import {getEmail} from '../store/auth';
 import {useSelector} from 'react-redux';
 
 var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
@@ -10,16 +10,30 @@ var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 function HomeScreen({navigation}) {
   const {colors} = useTheme();
   const styles = makeStyles(colors);
+  const email = useSelector(getEmail);
 
   const [flatListItems, setFlatListItems] = React.useState([]);
 
   React.useEffect(() => {
     db.transaction(function (txn) {
+      let queryWithEmailChecking = email => {
+        if (email === null) {
+          return "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event \
+          WHERE email IS NULL AND (stream_id, hlc) in (SELECT stream_id, max(hlc) FROM table_event GROUP BY stream_id) \
+          AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
+          ORDER BY JSON_EXTRACT(data, '$.date') DESC";
+        }
+        return "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event \
+        WHERE email = ? AND (stream_id, hlc) in (SELECT stream_id, max(hlc) FROM table_event GROUP BY stream_id) \
+        AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
+        ORDER BY JSON_EXTRACT(data, '$.date') DESC";
+      };
+
+      let valuesWithEmailChecking = email => (email === null ? [] : [email]);
+
       txn.executeSql(
-        "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event WHERE (stream_id, version) in (SELECT stream_id, max(version) FROM table_event where name <> 'DELETE_TRANSACTION'\
-        GROUP BY stream_id) AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
-        ORDER BY JSON_EXTRACT(data, '$.date') DESC",
-        [],
+        queryWithEmailChecking(email),
+        valuesWithEmailChecking(email),
         (tx, results) => {
           let temp = [];
           for (let i = 0; i < results.rows.length; ++i) {
