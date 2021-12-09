@@ -11,7 +11,6 @@ import {
   Button,
 } from 'react-native-paper';
 import {useForm, Controller} from 'react-hook-form';
-import {createTransaction} from '../repository/transaction';
 import {openDatabase} from 'react-native-sqlite-storage';
 import DatePicker from 'react-native-date-picker';
 import 'react-native-get-random-values';
@@ -69,7 +68,7 @@ function CreateScreen({navigation}) {
   return (
     <View style={styles.container}>
       <Caption>Date</Caption>
-      <View>
+      <View style={styles.row}>
         <Text onPress={() => setOpen(true)}>
           {new Date(date).toLocaleDateString('id-ID')}
         </Text>
@@ -117,7 +116,7 @@ function CreateScreen({navigation}) {
         name="amount"
         defaultValue=""
       />
-      <View>
+      <View style={styles.row}>
         <Caption>Type</Caption>
         <Controller
           control={control}
@@ -141,7 +140,7 @@ function CreateScreen({navigation}) {
           name="type"
         />
       </View>
-      <View>
+      <View style={styles.row}>
         <Caption>Category</Caption>
         <Controller
           control={control}
@@ -190,14 +189,20 @@ function CreateScreen({navigation}) {
         name="note"
         defaultValue=""
       />
-      <Button mode="contained" title="Submit" onPress={handleSubmit(onSubmit)}>
-        Save
-      </Button>
+
+      <View style={styles.row}>
+        <Button
+          mode="contained"
+          title="Submit"
+          onPress={handleSubmit(onSubmit)}>
+          Save
+        </Button>
+      </View>
     </View>
   );
 }
 
-const makeStyles = colors =>
+const makeStyles = () =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -208,16 +213,12 @@ const makeStyles = colors =>
       justifyContent: 'space-between',
     },
     row: {
-      padding: 15,
-      marginBottom: 5,
-      backgroundColor: colors.background,
+      marginBottom: 8,
+      marginTop: 8,
     },
-    fab: {
-      position: 'absolute',
-      margin: 16,
-      right: 0,
-      bottom: 0,
-      backgroundColor: colors.notification,
+    input: {
+      marginTop: 8,
+      marginBottom: 8,
     },
   });
 

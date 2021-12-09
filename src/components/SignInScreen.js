@@ -4,10 +4,10 @@ import {useTheme} from 'react-native-paper';
 import {
   GoogleSignin,
   GoogleSigninButton,
-  statusCodes,
 } from '@react-native-google-signin/google-signin';
 import {useDispatch} from 'react-redux';
 import {login} from '../store/auth';
+import {updateNullEmailInTable} from '../repository/transaction';
 
 const SignInScreen = ({navigation}) => {
   const {colors} = useTheme();
@@ -27,19 +27,10 @@ const SignInScreen = ({navigation}) => {
           accessToken: accessToken,
         }),
       );
+
+      const updateNullEmailRows = await updateNullEmailInTable(user.email);
       navigation.navigate('Home', {});
-    } catch (error) {
-      console.log(error);
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        // user cancelled the login flow
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        // operation (e.g. sign in) is in progress already
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        // play services not available or outdated
-      } else {
-        // some other error happened
-      }
-    }
+    } catch (error) {}
   };
 
   return (

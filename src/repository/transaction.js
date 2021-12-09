@@ -1,21 +1,31 @@
 import SQLite from 'react-native-sqlite-storage';
-import axios from 'axios';
-import {BACKEND_URL} from '@env';
 
-const createTransaction = ({amount, type, category, note}) => {
-  var db = SQLite.openDatabase({name: 'transactionDatabase.db'});
+const updateNullEmailInTable = async email => {
+  var db = SQLite.openDatabase({
+    name: 'transactionDatabase.db',
+    createFromLocation: 1,
+  });
 
-  db.transaction(function (tx) {
-    tx.executeSql(
-      'INSERT INTO table_transaction (date, amount, type, category, note) VALUES (?,?,?,?,?)',
-      [new Date().toISOString(), amount, type, category, note],
-      (tx, results) => {
-        console.log('Results', results.rowsAffected);
-        if (results.rowsAffected > 0) {
-          return true;
-        }
-      },
-    );
+  return new Promise((resolve, reject) => {
+    db.transaction(txn => {
+      txn.executeSql(
+        'SELECT COUNT(*) FROM table_event WHERE email IS NULL',
+        [],
+        (tx, results) => {
+          let count = results.rows.item(0)['COUNT(*)'];
+          if (count > 0) {
+            txn.executeSql(
+              'UPDATE table_event SET email = ? WHERE email IS NULL',
+              [email],
+              (tx, results) => {
+                resolve('success');
+              },
+              err => console.log(err),
+            );
+          }
+        },
+      );
+    });
   });
 };
 
@@ -46,4 +56,4 @@ const saveSyncToDatabase = data => {
   console.log('data', data);
 };
 
-export {createTransaction, syncTransactionToBackend, saveSyncToDatabase};
+export {updateNullEmailInTable, syncTransactionToBackend, saveSyncToDatabase};

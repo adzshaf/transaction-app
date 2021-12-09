@@ -124,7 +124,7 @@ function EditScreen({route, navigation}) {
   ) : (
     <View style={styles.container}>
       <Caption>Date</Caption>
-      <View>
+      <View style={styles.row}>
         <Text onPress={() => setOpen(true)}>
           {new Date(date).toLocaleDateString('id-ID')}
         </Text>
@@ -172,7 +172,7 @@ function EditScreen({route, navigation}) {
         name="amount"
         defaultValue={defaultData.amount.toString()}
       />
-      <View>
+      <View style={styles.row}>
         <Caption>Type</Caption>
         <Controller
           control={control}
@@ -197,7 +197,7 @@ function EditScreen({route, navigation}) {
           defaultValue={defaultData.type}
         />
       </View>
-      <View>
+      <View style={styles.row}>
         <Caption>Category</Caption>
         <Controller
           control={control}
@@ -247,16 +247,23 @@ function EditScreen({route, navigation}) {
         name="note"
         defaultValue={defaultData.note}
       />
-      <Button mode="contained" title="Submit" onPress={handleSubmit(onSubmit)}>
-        Save
-      </Button>
+      <View style={styles.row}>
+        <Button
+          mode="contained"
+          title="Submit"
+          onPress={handleSubmit(onSubmit)}>
+          Save
+        </Button>
+      </View>
 
-      <Button onPress={() => deleteTransaction()}>Delete</Button>
+      <View style={styles.row}>
+        <Button onPress={() => deleteTransaction()}>Delete</Button>
+      </View>
     </View>
   );
 }
 
-const makeStyles = colors =>
+const makeStyles = () =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -267,16 +274,12 @@ const makeStyles = colors =>
       justifyContent: 'space-between',
     },
     row: {
-      padding: 15,
-      marginBottom: 5,
-      backgroundColor: colors.background,
+      marginTop: 8,
+      marginBottom: 8,
     },
-    fab: {
-      position: 'absolute',
-      margin: 16,
-      right: 0,
-      bottom: 0,
-      backgroundColor: colors.notification,
+    input: {
+      marginTop: 8,
+      marginBottom: 8,
     },
   });
 
