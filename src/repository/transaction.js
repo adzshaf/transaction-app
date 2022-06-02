@@ -38,7 +38,7 @@ const syncTransactionToBackend = async email => {
   return new Promise((resolve, reject) =>
     db.transaction(txn => {
       txn.executeSql(
-        'SELECT * from table_event WHERE email = ?',
+        'SELECT * from table_event WHERE email = ? AND sync_at IS NULL',
         [email],
         (tx, results) => {
           let data = [];
@@ -52,8 +52,75 @@ const syncTransactionToBackend = async email => {
   );
 };
 
-const saveSyncToDatabase = data => {
-  console.log('data', data);
+const saveSyncToDatabase = async data => {
+  var db = SQLite.openDatabase({
+    name: 'transactionDatabase.db',
+    createFromLocation: 1,
+  });
+
+  let queryValue = [];
+  let queryCommand = '';
+
+  data.map((value, index) => {
+    queryValue.push(
+      value.email,
+      value.data,
+      value.stream_id,
+      value.hlc,
+      value.name,
+      value.sync_at,
+    );
+
+    queryCommand += '(?,?,?,?,?,?)';
+
+    if (index !== data.length - 1) {
+      queryCommand += ',';
+    }
+  });
+
+  return new Promise((resolve, reject) => {
+    db.transaction(txn => {
+      txn.executeSql(
+        'DELETE FROM table_event',
+        [],
+        (tx, results) => {
+          txn.executeSql(
+            `INSERT INTO table_event (email, data, stream_id, hlc, name, sync_at) VALUES ${queryCommand}`,
+            queryValue,
+            (tx, results) => {
+              resolve('success');
+            },
+          );
+        },
+        err => console.log('err', err),
+      );
+    });
+  });
 };
 
-export {updateNullEmailInTable, syncTransactionToBackend, saveSyncToDatabase};
+const deleteDatabase = async data => {
+  var db = SQLite.openDatabase({
+    name: 'transactionDatabase.db',
+    createFromLocation: 1,
+  });
+
+  return new Promise((resolve, reject) => {
+    db.transaction(txn => {
+      txn.executeSql(
+        'DELETE FROM table_event',
+        [],
+        (tx, results) => {
+          resolve('success');
+        },
+        err => console.log('err', err),
+      );
+    });
+  });
+};
+
+export {
+  updateNullEmailInTable,
+  syncTransactionToBackend,
+  saveSyncToDatabase,
+  deleteDatabase,
+};

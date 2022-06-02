@@ -36,54 +36,46 @@ function EditScreen({route, navigation}) {
   const dispatch = useDispatch();
 
   const onSubmit = data => {
-    const incrementResult = increment({ts, count, node}, new Date().getTime());
+    const incrementResult = increment(
+      {ts, count, node},
+      Math.round(new Date().getTime() / 1000),
+    );
     dispatch(update(incrementResult));
     db.transaction(function (tx) {
       tx.executeSql(
-        'SELECT MAX(hlc) FROM table_event WHERE stream_id = ?',
-        [transactionId],
+        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
+        [
+          transactionId,
+          JSON.stringify(data),
+          'EDIT_TRANSACTION',
+          email,
+          toString(incrementResult),
+        ],
         (tx, results) => {
-          tx.executeSql(
-            'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-            [
-              transactionId,
-              JSON.stringify(data),
-              'EDIT_TRANSACTION',
-              email,
-              toString(incrementResult),
-            ],
-            (tx, results) => {
-              navigation.push('Home');
-            },
-          );
+          navigation.push('Home');
         },
       );
     });
   };
 
   const deleteTransaction = () => {
-    const incrementResult = increment({ts, count, node}, new Date().getTime());
+    const incrementResult = increment(
+      {ts, count, node},
+      Math.round(new Date().getTime() / 1000),
+    );
     dispatch(update(incrementResult));
     db.transaction(function (tx) {
-      let version;
       tx.executeSql(
-        'SELECT * FROM table_event WHERE stream_id = ? AND hlc = (SELECT MAX(hlc) FROM table_event WHERE stream_id = ?)',
-        [transactionId, transactionId],
+        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
+        [
+          transactionId,
+          results.rows.item(0).data,
+          'DELETE_TRANSACTION',
+          email,
+          toString(incrementResult),
+        ],
         (tx, results) => {
-          version = results.rows.item(0).version;
-          tx.executeSql(
-            'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-            [
-              transactionId,
-              results.rows.item(0).data,
-              'DELETE_TRANSACTION',
-              email,
-              toString(incrementResult),
-            ],
-            (tx, results) => {
-              navigation.push('Home');
-            },
-          );
+          navigation.push('Home');
         },
       );
     });

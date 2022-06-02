@@ -1,8 +1,6 @@
 import * as React from 'react';
 import {View, StyleSheet} from 'react-native';
 import {
-  FAB,
-  Title,
   Text,
   Caption,
   useTheme,
@@ -39,7 +37,10 @@ function CreateScreen({navigation}) {
   const dispatch = useDispatch();
 
   const onSubmit = data => {
-    const incrementResult = increment({ts, count, node}, new Date().getTime());
+    const incrementResult = increment(
+      {ts, count, node},
+      Math.round(new Date().getTime() / 1000),
+    );
     dispatch(update(incrementResult));
     db.transaction(function (tx) {
       tx.executeSql(

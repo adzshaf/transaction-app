@@ -16,35 +16,23 @@ function HomeScreen({navigation}) {
 
   React.useEffect(() => {
     db.transaction(function (txn) {
-      let queryWithEmailChecking = email => {
-        if (email === null) {
-          return "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event \
-          WHERE email IS NULL AND (stream_id, hlc) in (SELECT stream_id, max(hlc) FROM table_event GROUP BY stream_id) \
-          AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
-          ORDER BY JSON_EXTRACT(data, '$.date') DESC";
-        }
-        return "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event \
+      txn.executeSql(
+        "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event \
         WHERE email = ? AND (stream_id, hlc) in (SELECT stream_id, max(hlc) FROM table_event GROUP BY stream_id) \
         AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
-        ORDER BY JSON_EXTRACT(data, '$.date') DESC";
-      };
-
-      let valuesWithEmailChecking = email => (email === null ? [] : [email]);
-
-      txn.executeSql(
-        queryWithEmailChecking(email),
-        valuesWithEmailChecking(email),
+        ORDER BY JSON_EXTRACT(data, '$.date') DESC",
+        [email],
         (tx, results) => {
-          let temp = [];
+          let responseData = [];
           for (let i = 0; i < results.rows.length; ++i) {
             let data = JSON.parse(
               results.rows.item(i)["JSON_EXTRACT(data, '$')"],
             );
             data['stream_id'] = results.rows.item(i)['stream_id'];
             data['id'] = results.rows.item(i)['id'];
-            temp.push(data);
+            responseData.push(data);
           }
-          setFlatListItems(temp);
+          setFlatListItems(responseData);
         },
         error => console.log(error),
       );

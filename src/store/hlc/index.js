@@ -4,7 +4,7 @@ import {getUniqueId} from 'react-native-device-info';
 export const hlcSlice = createSlice({
   name: 'hlc',
   initialState: {
-    ts: new Date().getTime(),
+    ts: Math.round(new Date().getTime() / 1000),
     node: getUniqueId(),
     count: 0,
   },
