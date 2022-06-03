@@ -52,13 +52,13 @@ function EditScreen({route, navigation}) {
           toString(incrementResult),
         ],
         (tx, results) => {
-          navigation.push('Home');
+          navigation.navigate('Home');
         },
       );
     });
   };
 
-  const deleteTransaction = () => {
+  const deleteTransaction = defaultData => {
     const incrementResult = increment(
       {ts, count, node},
       Math.round(new Date().getTime() / 1000),
@@ -69,14 +69,15 @@ function EditScreen({route, navigation}) {
         'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
         [
           transactionId,
-          results.rows.item(0).data,
+          defaultData,
           'DELETE_TRANSACTION',
           email,
           toString(incrementResult),
         ],
         (tx, results) => {
-          navigation.push('Home');
+          navigation.navigate('Home');
         },
+        error => console.log(error),
       );
     });
   };
@@ -249,7 +250,7 @@ function EditScreen({route, navigation}) {
       </View>
 
       <View style={styles.row}>
-        <Button onPress={() => deleteTransaction()}>Delete</Button>
+        <Button onPress={() => deleteTransaction(defaultData)}>Delete</Button>
       </View>
     </View>
   );

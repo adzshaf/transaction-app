@@ -53,7 +53,7 @@ function CreateScreen({navigation}) {
           toString(incrementResult),
         ],
         (tx, results) => {
-          navigation.push('Home');
+          navigation.navigate('Home');
         },
         error => console.log(error),
       );

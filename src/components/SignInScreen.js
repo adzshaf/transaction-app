@@ -78,7 +78,7 @@ const SignInScreen = ({navigation}) => {
       dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
 
       const saveToDb = saveSyncToDatabase(responseData);
-      navigation.push('Home');
+      navigation.navigate('Home');
     } catch (error) {}
   };
 

@@ -77,7 +77,7 @@ function CustomNavigationBar({navigation, back}) {
     dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
 
     const saveToDb = saveSyncToDatabase(responseData);
-    navigation.push('Home');
+    navigation.navigate('Home');
   };
 
   const signOut = async () => {
@@ -85,7 +85,7 @@ function CustomNavigationBar({navigation, back}) {
       await GoogleSignin.signOut();
       const deleteDatabaseResponse = await deleteDatabase();
       dispatch(logout());
-      navigation.push('Home');
+      navigation.replace('Home');
     } catch (error) {
       console.error(error);
     }

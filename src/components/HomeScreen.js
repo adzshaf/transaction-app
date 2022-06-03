@@ -5,12 +5,16 @@ import {openDatabase} from 'react-native-sqlite-storage';
 import {getEmail} from '../store/auth';
 import {useSelector} from 'react-redux';
 
+import {useIsFocused} from '@react-navigation/native';
+
 var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 
 function HomeScreen({navigation}) {
   const {colors} = useTheme();
   const styles = makeStyles(colors);
   const email = useSelector(getEmail);
+
+  const isFocused = useIsFocused();
 
   const [flatListItems, setFlatListItems] = React.useState([]);
 
@@ -37,7 +41,7 @@ function HomeScreen({navigation}) {
         error => console.log(error),
       );
     });
-  }, []);
+  }, [isFocused]);
 
   return (
     <>
@@ -81,7 +85,7 @@ function HomeScreen({navigation}) {
       <FAB
         style={styles.fab}
         icon="plus"
-        onPress={() => navigation.push('Create', {})}
+        onPress={() => navigation.navigate('Create')}
       />
     </>
   );
