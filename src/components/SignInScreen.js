@@ -67,7 +67,9 @@ const SignInScreen = ({navigation}) => {
           Math.round(new Date().getTime() / 1000),
         );
 
-        let {ts: syncTs, count: syncCount, node: syncNode} = syncHlc;
+        syncTs = syncHlc.ts;
+        syncCount = syncHlc.count;
+        syncNode = syncHlc.node;
 
         value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
       });

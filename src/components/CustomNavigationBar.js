@@ -66,10 +66,11 @@ function CustomNavigationBar({navigation, back}) {
         Math.round(new Date().getTime() / 1000),
       );
 
-      let {ts: syncTs, count: syncCount, node: syncNode} = syncHlc;
+      syncTs = syncHlc.ts;
+      syncCount = syncHlc.count;
+      syncNode = syncHlc.node;
 
       value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
-      console.log(value.hlc);
     });
 
     // Melakukan pembaruan ts, count, dan node pada clock lokal yang disimpan di Redux

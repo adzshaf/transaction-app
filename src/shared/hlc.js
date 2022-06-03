@@ -32,7 +32,6 @@ class HLC {
 
   receive(remote, now) {
     if (now > this.ts && now > remote.ts) {
-      console.log('case', this.node);
       this.ts = now;
       this.count = 0;
       return {ts: now, count: 0, node: this.node};
@@ -40,18 +39,15 @@ class HLC {
 
     if (this.ts === remote.ts) {
       this.count = Math.max(this.count, remote.count) + 1;
-      console.log('case2', this.node);
       return {
         ts: this.ts,
         count: this.count,
         node: this.node,
       };
     } else if (this.ts > remote.ts) {
-      console.log('case3', this.node);
       this.count = this.count + 1;
       return {ts: this.ts, count: this.count, node: this.node};
     } else {
-      console.log('case4', this.node);
       this.ts = remote.ts;
       this.count = remote.count + 1;
       return {
