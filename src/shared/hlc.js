@@ -37,7 +37,7 @@ class HLC {
       return {ts: now, count: 0, node: this.node};
     }
 
-    if (this.ts === remote.ts) {
+    if (this.ts == remote.ts) {
       this.count = Math.max(this.count, remote.count) + 1;
       return {
         ts: this.ts,
@@ -68,7 +68,7 @@ class HLC {
     );
   }
 
-  fromString(str) {
+  static fromString(str) {
     const [ts, count, ...node] = str.split(':');
     return {
       ts: parseInt(ts),

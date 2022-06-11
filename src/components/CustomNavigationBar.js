@@ -12,7 +12,7 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {useDispatch} from 'react-redux';
 import {logout} from '../store/auth';
 import {
-  syncTransactionToBackend,
+  selectTransactionToBackend,
   saveSyncToDatabase,
   deleteDatabase,
 } from '../repository/transaction';
@@ -36,7 +36,7 @@ function CustomNavigationBar({navigation, back}) {
   const node = useSelector(getNode);
 
   const syncData = async () => {
-    const data = await syncTransactionToBackend(email);
+    const data = await selectTransactionToBackend(email);
     const response = await axios.post(
       `${BACKEND_URL}/sync`,
       {data: data},
@@ -54,7 +54,7 @@ function CustomNavigationBar({navigation, back}) {
         ts: remoteTs,
         count: remoteCount,
         node: remoteNode,
-      } = fromString(value.hlc);
+      } = HLC.fromString(value.hlc);
       let remoteHlc = new HLC(remoteTs, remoteNode, remoteCount);
 
       // Membuat HLC dari data lokal

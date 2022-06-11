@@ -55,7 +55,7 @@ const SignInScreen = ({navigation}) => {
           ts: remoteTs,
           count: remoteCount,
           node: remoteNode,
-        } = fromString(value.hlc);
+        } = HLC.fromString(value.hlc);
         let remoteHlc = new HLC(remoteTs, remoteNode, remoteCount);
 
         // Membuat HLC dari data lokal

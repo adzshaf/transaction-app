@@ -17,6 +17,7 @@ import {useSelector} from 'react-redux';
 import {update, getTs, getCount, getNode} from '../store/hlc';
 import {toString, increment} from '../shared/hlcFunction';
 import {useDispatch} from 'react-redux';
+import HLC from '../shared/hlc';
 
 var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 
@@ -36,8 +37,8 @@ function EditScreen({route, navigation}) {
   const dispatch = useDispatch();
 
   const onSubmit = data => {
-    const incrementResult = increment(
-      {ts, count, node},
+    const hlc = new HLC(ts, node, count);
+    const incrementResult = hlc.increment(
       Math.round(new Date().getTime() / 1000),
     );
     dispatch(update(incrementResult));
@@ -49,7 +50,7 @@ function EditScreen({route, navigation}) {
           JSON.stringify(data),
           'EDIT_TRANSACTION',
           email,
-          toString(incrementResult),
+          hlc.toString(),
         ],
         (tx, results) => {
           navigation.navigate('Home');
@@ -59,8 +60,8 @@ function EditScreen({route, navigation}) {
   };
 
   const deleteTransaction = defaultData => {
-    const incrementResult = increment(
-      {ts, count, node},
+    const hlc = new HLC(ts, node, count);
+    const incrementResult = hlc.increment(
       Math.round(new Date().getTime() / 1000),
     );
     dispatch(update(incrementResult));
@@ -72,7 +73,7 @@ function EditScreen({route, navigation}) {
           defaultData,
           'DELETE_TRANSACTION',
           email,
-          toString(incrementResult),
+          hlc.toString(),
         ],
         (tx, results) => {
           navigation.navigate('Home');

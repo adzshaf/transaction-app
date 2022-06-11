@@ -29,7 +29,7 @@ const updateNullEmailInTable = async email => {
   });
 };
 
-const syncTransactionToBackend = async email => {
+const selectTransactionToBackend = async email => {
   var db = SQLite.openDatabase({
     name: 'transactionDatabase.db',
     createFromLocation: 1,
@@ -120,7 +120,7 @@ const deleteDatabase = async data => {
 
 export {
   updateNullEmailInTable,
-  syncTransactionToBackend,
+  selectTransactionToBackend,
   saveSyncToDatabase,
   deleteDatabase,
 };
