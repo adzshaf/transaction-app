@@ -29,13 +29,6 @@ const SignInScreen = ({navigation}) => {
       const userInfo = await GoogleSignin.signIn();
       const {idToken, accessToken} = await GoogleSignin.getTokens();
       const user = userInfo.user;
-      dispatch(
-        login({
-          token: idToken,
-          email: user.email,
-          accessToken: accessToken,
-        }),
-      );
 
       const response = await axios.post(
         `${BACKEND_URL}/login`,
@@ -78,8 +71,18 @@ const SignInScreen = ({navigation}) => {
       dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
 
       const saveToDb = saveSyncToDatabase(responseData);
+
+      dispatch(
+        login({
+          token: idToken,
+          email: user.email,
+          accessToken: accessToken,
+        }),
+      );
       navigation.navigate('Home');
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (

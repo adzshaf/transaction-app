@@ -70,7 +70,7 @@ function EditScreen({route, navigation}) {
         'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
         [
           transactionId,
-          defaultData,
+          JSON.stringify(defaultData),
           'DELETE_TRANSACTION',
           email,
           hlc.toString(),
