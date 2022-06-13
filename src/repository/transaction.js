@@ -58,41 +58,46 @@ const saveSyncToDatabase = async data => {
     createFromLocation: 1,
   });
 
-  let queryValue = [];
-  let queryCommand = '';
-
-  data.map((value, index) => {
-    queryValue.push(
-      value.email,
-      value.data,
-      value.stream_id,
-      value.hlc,
-      value.name,
-      value.sync_at,
-    );
-
-    queryCommand += '(?,?,?,?,?,?)';
-
-    if (index !== data.length - 1) {
-      queryCommand += ',';
-    }
-  });
-
   return new Promise((resolve, reject) => {
     db.transaction(txn => {
       txn.executeSql(
         'DELETE FROM table_event',
         [],
         (tx, results) => {
-          txn.executeSql(
-            `INSERT INTO table_event (email, data, stream_id, hlc, name, sync_at) VALUES ${queryCommand}`,
-            queryValue,
-            (tx, results) => {
-              resolve('success');
-            },
-          );
+          const chunkSize = 100;
+          for (let i = 0; i < data.length; i += chunkSize) {
+            let queryValue = [];
+            let queryCommand = '';
+            const chunk = data.slice(i, i + chunkSize);
+
+            chunk.map((value, index) => {
+              queryValue.push(
+                value.email,
+                value.data,
+                value.stream_id,
+                value.hlc,
+                value.name,
+                value.sync_at,
+              );
+
+              queryCommand += '(?,?,?,?,?,?)';
+
+              if (index !== chunk.length - 1) {
+                queryCommand += ',';
+              }
+            });
+
+            txn.executeSql(
+              `INSERT INTO table_event (email, data, stream_id, hlc, name, sync_at) VALUES ${queryCommand}`,
+              queryValue,
+              (tx, results) => {
+                resolve('success');
+              },
+              err => console.log('error insert', err),
+            );
+          }
         },
-        err => console.log('err', err),
+        err => console.log('error delete:', err),
       );
     });
   });

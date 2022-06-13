@@ -14,6 +14,7 @@ import HLC from '../shared/hlc';
 import {fromString} from '../shared/hlcFunction';
 import {getTs, getCount, getNode, update} from '../store/hlc';
 import {saveSyncToDatabase} from '../repository/transaction';
+import {logger} from 'react-native-logs';
 
 const SignInScreen = ({navigation}) => {
   const {colors} = useTheme();
@@ -23,18 +24,25 @@ const SignInScreen = ({navigation}) => {
   const count = useSelector(getCount);
   const node = useSelector(getNode);
 
+  var log = logger.createLogger();
+
   const signIn = async () => {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const {idToken, accessToken} = await GoogleSignin.getTokens();
       const user = userInfo.user;
+      log.info('BEARER: ' + idToken);
+
+      let startTime = new Date();
 
       const response = await axios.post(
         `${BACKEND_URL}/login`,
         {},
         {headers: {Authorization: `Bearer ${idToken}`}},
       );
+
+      log.info('STATUS: ' + response.status);
 
       const {data: responseData} = response.data;
 
@@ -67,10 +75,14 @@ const SignInScreen = ({navigation}) => {
         value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
       });
 
+      const saveToDb = saveSyncToDatabase(responseData);
+      let endTime = new Date();
+      let costTime = (endTime - startTime) / 1000;
+
+      log.info('SYNC TIME: ' + costTime);
+
       // Melakukan pembaruan ts, count, dan node pada clock lokal yang disimpan di Redux
       dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
-
-      const saveToDb = saveSyncToDatabase(responseData);
 
       dispatch(
         login({
