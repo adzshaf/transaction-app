@@ -8,6 +8,10 @@ import CustomNavigationBar from './src/components/CustomNavigationBar';
 import SignIn from './src/components/SignInScreen';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {CLIENT_ID} from '@env';
+import {
+  RenderPassReport,
+  PerformanceProfiler,
+} from '@shopify/react-native-performance';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,31 +22,41 @@ GoogleSignin.configure({
 });
 
 function App() {
+  const onReportPrepared = useCallback(report => {
+    monorail.produce(convertReportToMonorailObject(report));
+  }, []);
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Home"
-        screenOptions={{
-          header: props => <CustomNavigationBar {...props} />,
-        }}>
-        <Stack.Screen name="Home" component={Home} options={{title: 'Home'}} />
-        <Stack.Screen
-          name="Create"
-          component={Form}
-          options={{title: 'Create Transaction'}}
-        />
-        <Stack.Screen
-          name="Edit"
-          component={EditForm}
-          options={{title: 'Edit Transaction'}}
-        />
-        <Stack.Screen
-          name="SignIn"
-          component={SignIn}
-          options={{title: 'Sign in'}}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <PerformanceProfiler onReportPrepared={onReportPrepared}>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{
+            header: props => <CustomNavigationBar {...props} />,
+          }}>
+          <Stack.Screen
+            name="Home"
+            component={Home}
+            options={{title: 'Home'}}
+          />
+          <Stack.Screen
+            name="Create"
+            component={Form}
+            options={{title: 'Create Transaction'}}
+          />
+          <Stack.Screen
+            name="Edit"
+            component={EditForm}
+            options={{title: 'Edit Transaction'}}
+          />
+          <Stack.Screen
+            name="SignIn"
+            component={SignIn}
+            options={{title: 'Sign in'}}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PerformanceProfiler>
   );
 }
 
