@@ -22,41 +22,37 @@ GoogleSignin.configure({
 });
 
 function App() {
-  const onReportPrepared = useCallback(report => {
-    monorail.produce(convertReportToMonorailObject(report));
-  }, []);
+  // const onReportPrepared = React.useCallback(report => {
+  //   monorail.produce(convertReportToMonorailObject(report));
+  // }, []);
 
   return (
-    <PerformanceProfiler onReportPrepared={onReportPrepared}>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Home"
-          screenOptions={{
-            header: props => <CustomNavigationBar {...props} />,
-          }}>
-          <Stack.Screen
-            name="Home"
-            component={Home}
-            options={{title: 'Home'}}
-          />
-          <Stack.Screen
-            name="Create"
-            component={Form}
-            options={{title: 'Create Transaction'}}
-          />
-          <Stack.Screen
-            name="Edit"
-            component={EditForm}
-            options={{title: 'Edit Transaction'}}
-          />
-          <Stack.Screen
-            name="SignIn"
-            component={SignIn}
-            options={{title: 'Sign in'}}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </PerformanceProfiler>
+    // <PerformanceProfiler onReportPrepared={onReportPrepared}>
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Home"
+        screenOptions={{
+          header: props => <CustomNavigationBar {...props} />,
+        }}>
+        <Stack.Screen name="Home" component={Home} options={{title: 'Home'}} />
+        <Stack.Screen
+          name="Create"
+          component={Form}
+          options={{title: 'Create Transaction'}}
+        />
+        <Stack.Screen
+          name="Edit"
+          component={EditForm}
+          options={{title: 'Edit Transaction'}}
+        />
+        <Stack.Screen
+          name="SignIn"
+          component={SignIn}
+          options={{title: 'Sign in'}}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+    // </PerformanceProfiler>
   );
 }
 

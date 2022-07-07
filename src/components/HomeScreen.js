@@ -1,6 +1,13 @@
 import * as React from 'react';
 import {View, FlatList, StyleSheet, TouchableOpacity} from 'react-native';
-import {FAB, Text, Subheading, useTheme, Colors} from 'react-native-paper';
+import {
+  FAB,
+  Text,
+  Subheading,
+  useTheme,
+  Colors,
+  ActivityIndicator,
+} from 'react-native-paper';
 import {openDatabase} from 'react-native-sqlite-storage';
 import {getEmail} from '../store/auth';
 import {useSelector} from 'react-redux';
@@ -13,6 +20,7 @@ function HomeScreen({navigation}) {
   const {colors} = useTheme();
   const styles = makeStyles(colors);
   const email = useSelector(getEmail);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const isFocused = useIsFocused();
 
@@ -37,6 +45,7 @@ function HomeScreen({navigation}) {
             responseData.push(data);
           }
           setFlatListItems(responseData);
+          // setIsLoading(false);
         },
         error => console.log(error),
       );
@@ -45,43 +54,47 @@ function HomeScreen({navigation}) {
 
   return (
     <>
-      <FlatList
-        style={styles.container}
-        data={flatListItems}
-        renderItem={({item}) => (
-          <View style={styles.row}>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('Edit', {
-                  transactionId: item.stream_id,
-                })
-              }>
-              <Subheading>
-                {new Date(item.date).toLocaleDateString('id-ID')}
-              </Subheading>
-              <View style={styles.col}>
-                <View>
-                  <Text>Type: {item.type}</Text>
-                  <Text>Category: {item.category}</Text>
-                  <Text>Note: {item.note ? item.note : '-'}</Text>
+      {isLoading ? (
+        <ActivityIndicator />
+      ) : (
+        <FlatList
+          style={styles.container}
+          data={flatListItems}
+          renderItem={({item}) => (
+            <View style={styles.row}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('Edit', {
+                    transactionId: item.stream_id,
+                  })
+                }>
+                <Subheading>
+                  {new Date(item.date).toLocaleDateString('id-ID')}
+                </Subheading>
+                <View style={styles.col}>
+                  <View>
+                    <Text>Type: {item.type}</Text>
+                    <Text>Category: {item.category}</Text>
+                    <Text>Note: {item.note ? item.note : '-'}</Text>
+                  </View>
+                  <View>
+                    <Text
+                      style={{
+                        color:
+                          item.type === 'Income'
+                            ? Colors.blue900
+                            : colors.notification,
+                      }}>
+                      Amount: {item.amount}
+                    </Text>
+                  </View>
                 </View>
-                <View>
-                  <Text
-                    style={{
-                      color:
-                        item.type === 'Income'
-                          ? Colors.blue900
-                          : colors.notification,
-                    }}>
-                    Amount: {item.amount}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
-        keyExtractor={item => item.id}
-      />
+              </TouchableOpacity>
+            </View>
+          )}
+          keyExtractor={item => item.id}
+        />
+      )}
       <FAB
         style={styles.fab}
         icon="plus"
