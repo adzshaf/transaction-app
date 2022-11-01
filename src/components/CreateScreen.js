@@ -20,7 +20,7 @@ import {toString, increment} from '../shared/hlcFunction';
 import {useDispatch} from 'react-redux';
 import HLC from '../shared/hlc';
 import SQLite from 'react-native-sqlite-2';
-import { loadDatabase } from '../repository/transaction';
+import {queryInsertTransaction} from '../repository/transaction';
 
 var db = SQLite.openDatabase('transactionDatabase.db');
 
@@ -42,29 +42,23 @@ function CreateScreen({navigation}) {
   const dispatch = useDispatch();
 
   const onSubmit = async data => {
-    const loadDatabaseResponse = await loadDatabase()
-
     const hlc = new HLC(ts, node, count);
     const incrementResult = hlc.increment(
       Math.round(new Date().getTime() / 1000),
     );
     dispatch(update(incrementResult));
-    db.transaction(function (tx) {
-      tx.executeSql(
-        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-        [
-          uuidv4(),
-          JSON.stringify(data),
-          'ADD_TRANSACTION',
-          email,
-          hlc.toString(),
-        ],
-        (tx, results) => {
-          navigation.navigate('Home');
-        },
-        (_, error) => console.log("err", error),
-      );
+
+    const insertResponse = await queryInsertTransaction({
+      id: uuidv4(),
+      data: JSON.stringify(data),
+      name: 'ADD_TRANSACTION',
+      email: email,
+      hlc: hlc.toString(),
     });
+
+    if (insertResponse) {
+      navigation.navigate('Home');
+    }
   };
 
   const {colors} = useTheme();

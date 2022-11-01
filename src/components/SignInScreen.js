@@ -6,8 +6,6 @@ import {
   GoogleSigninButton,
 } from '@react-native-google-signin/google-signin';
 import {useDispatch, useSelector} from 'react-redux';
-import {login} from '../store/auth';
-import {updateNullEmailInTable} from '../repository/transaction';
 import axios from 'axios';
 import {BACKEND_URL} from '@env';
 import HLC from '../shared/hlc';
@@ -35,8 +33,6 @@ const SignInScreen = ({navigation}) => {
       log.info('BEARER: ' + idToken);
 
       let startTime = new Date();
-      console.log("HMMM", startTime)
-      console.log("BACKEND", BACKEND_URL)
 
       const response = await axios.post(
         `${BACKEND_URL}/login`,

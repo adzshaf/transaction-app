@@ -19,10 +19,10 @@ import {toString, increment} from '../shared/hlcFunction';
 import {useDispatch} from 'react-redux';
 import HLC from '../shared/hlc';
 import SQLite from 'react-native-sqlite-2';
-
+import {queryInsertTransaction} from '../repository/transaction';
 
 // var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
-var db = SQLite.openDatabase('transactionDatabase.db')
+var db = SQLite.openDatabase('transactionDatabase.db');
 
 function EditScreen({route, navigation}) {
   const {
@@ -39,51 +39,60 @@ function EditScreen({route, navigation}) {
   const node = useSelector(getNode);
   const dispatch = useDispatch();
 
-  const onSubmit = data => {
+  const onSubmit = async data => {
     const hlc = new HLC(ts, node, count);
     const incrementResult = hlc.increment(
       Math.round(new Date().getTime() / 1000),
     );
     dispatch(update(incrementResult));
-    db.transaction(function (tx) {
-      tx.executeSql(
-        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-        [
-          transactionId,
-          JSON.stringify(data),
-          'EDIT_TRANSACTION',
-          email,
-          hlc.toString(),
-        ],
-        (tx, results) => {
-          navigation.navigate('Home');
-        },
-      );
+
+    const insertResponse = await queryInsertTransaction({
+      id: transactionId,
+      data: JSON.stringify(data),
+      name: 'EDIT_TRANSACTION',
+      email: email,
+      hlc: hlc.toString(),
     });
+
+    if (insertResponse) {
+      navigation.navigate('Home');
+    }
   };
 
-  const deleteTransaction = defaultData => {
+  const deleteTransaction = async defaultData => {
     const hlc = new HLC(ts, node, count);
     const incrementResult = hlc.increment(
       Math.round(new Date().getTime() / 1000),
     );
     dispatch(update(incrementResult));
-    db.transaction(function (tx) {
-      tx.executeSql(
-        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-        [
-          transactionId,
-          JSON.stringify(defaultData),
-          'DELETE_TRANSACTION',
-          email,
-          hlc.toString(),
-        ],
-        (tx, results) => {
-          navigation.navigate('Home');
-        },
-        error => console.log(error),
-      );
+
+    const insertResponse = await queryInsertTransaction({
+      id: transactionId,
+      data: JSON.stringify(defaultData),
+      name: 'DELETE_TRANSACTION',
+      email: email,
+      hlc: hlc.toString(),
     });
+
+    if (insertResponse) {
+      navigation.navigate('Home');
+    }
+    // db.transaction(function (tx) {
+    //   tx.executeSql(
+    //     'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
+    //     [
+    //       transactionId,
+    //       JSON.stringify(defaultData),
+    //       'DELETE_TRANSACTION',
+    //       email,
+    //       hlc.toString(),
+    //     ],
+    //     (tx, results) => {
+    //       navigation.navigate('Home');
+    //     },
+    //     error => console.log(error),
+    //   );
+    // });
   };
 
   const {colors} = useTheme();

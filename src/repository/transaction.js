@@ -1,11 +1,7 @@
-// import SQLite from 'react-native-sqlite-storage';
 import SQLite from 'react-native-sqlite-2';
 
 const updateNullEmailInTable = async email => {
-  var db = SQLite.openDatabase({
-    name: 'transactionDatabase.db',
-    createFromLocation: 1,
-  });
+  var db = SQLite.openDatabase('transactionDatabase.db');
 
   return new Promise((resolve, reject) => {
     db.transaction(txn => {
@@ -31,10 +27,7 @@ const updateNullEmailInTable = async email => {
 };
 
 const selectTransactionToBackend = async email => {
-  var db = SQLite.openDatabase({
-    name: 'transactionDatabase.db',
-    createFromLocation: 1,
-  });
+  var db = SQLite.openDatabase('transactionDatabase.db');
 
   return new Promise((resolve, reject) =>
     db.transaction(txn => {
@@ -54,10 +47,7 @@ const selectTransactionToBackend = async email => {
 };
 
 const saveSyncToDatabase = async data => {
-  var db = SQLite.openDatabase({
-    name: 'transactionDatabase.db',
-    createFromLocation: 1,
-  });
+  var db = SQLite.openDatabase('transactionDatabase.db');
 
   return new Promise((resolve, reject) => {
     db.transaction(txn => {
@@ -141,10 +131,64 @@ const loadDatabase = async () => {
   });
 };
 
+const queryAllTransactionByEmail = async email => {
+  var db = SQLite.openDatabase('transactionDatabase.db');
+
+  return new Promise((resolve, reject) => {
+    db.transaction(txn => {
+      txn.executeSql(
+        'CREATE TABLE IF NOT EXISTS "table_event" ("id" INTEGER, "stream_id"	VARCHAR(36) NOT NULL, "data"	TEXT NOT NULL, "name"	VARCHAR(50) NOT NULL, "email"	VARCHAR(255), "hlc"	VARCHAR(100) NOT NULL, "sync_at"	INTEGER, PRIMARY KEY("id" AUTOINCREMENT) )',
+        [],
+      );
+      txn.executeSql(
+        "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event \
+        WHERE email = ? AND (stream_id, hlc) in (SELECT stream_id, max(hlc) FROM table_event GROUP BY stream_id) \
+        AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
+        ORDER BY JSON_EXTRACT(data, '$.date') DESC",
+        [email],
+        (tx, results) => {
+          let responseData = [];
+          for (let i = 0; i < results.rows.length; ++i) {
+            let data = JSON.parse(
+              results.rows.item(i)["JSON_EXTRACT(data, '$')"],
+            );
+            data['stream_id'] = results.rows.item(i)['stream_id'];
+            data['id'] = results.rows.item(i)['id'];
+            responseData.push(data);
+          }
+          resolve(responseData);
+        },
+        (_, error) => console.log('err', error),
+      );
+    });
+  });
+};
+
+const queryInsertTransaction = async inputData => {
+  var db = SQLite.openDatabase('transactionDatabase.db');
+
+  const {id, data, name, email, hlc} = inputData;
+
+  return new Promise((resolve, reject) => {
+    db.transaction(function (tx) {
+      tx.executeSql(
+        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
+        [id, JSON.stringify(data), name, email, hlc],
+        (tx, results) => {
+          resolve(true);
+        },
+        (_, error) => console.log('err', error),
+      );
+    });
+  });
+};
+
 export {
   updateNullEmailInTable,
   selectTransactionToBackend,
   saveSyncToDatabase,
   deleteDatabase,
   loadDatabase,
+  queryAllTransactionByEmail,
+  queryInsertTransaction,
 };
