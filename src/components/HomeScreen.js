@@ -13,8 +13,10 @@ import {getEmail} from '../store/auth';
 import {useSelector} from 'react-redux';
 
 import {useIsFocused} from '@react-navigation/native';
+import SQLite from 'react-native-sqlite-2';
+import {loadDatabase} from '../repository/transaction';
 
-var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
+var db = SQLite.openDatabase('transactionDatabase.db');
 
 function HomeScreen({navigation}) {
   const {colors} = useTheme();
@@ -28,6 +30,10 @@ function HomeScreen({navigation}) {
 
   React.useEffect(() => {
     db.transaction(function (txn) {
+      txn.executeSql(
+        'CREATE TABLE IF NOT EXISTS "table_event" ("id" INTEGER, "stream_id"	VARCHAR(36) NOT NULL, "data"	TEXT NOT NULL, "name"	VARCHAR(50) NOT NULL, "email"	VARCHAR(255), "hlc"	VARCHAR(100) NOT NULL, "sync_at"	INTEGER, PRIMARY KEY("id" AUTOINCREMENT) )',
+        [],
+      );
       txn.executeSql(
         "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event \
         WHERE email = ? AND (stream_id, hlc) in (SELECT stream_id, max(hlc) FROM table_event GROUP BY stream_id) \
@@ -47,7 +53,7 @@ function HomeScreen({navigation}) {
           setFlatListItems(responseData);
           // setIsLoading(false);
         },
-        error => console.log(error),
+        (_, error) => console.log('err', error),
       );
     });
   }, [isFocused]);

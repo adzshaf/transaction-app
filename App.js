@@ -8,10 +8,6 @@ import CustomNavigationBar from './src/components/CustomNavigationBar';
 import SignIn from './src/components/SignInScreen';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {CLIENT_ID} from '@env';
-import {
-  RenderPassReport,
-  PerformanceProfiler,
-} from '@shopify/react-native-performance';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,12 +18,7 @@ GoogleSignin.configure({
 });
 
 function App() {
-  // const onReportPrepared = React.useCallback(report => {
-  //   monorail.produce(convertReportToMonorailObject(report));
-  // }, []);
-
   return (
-    // <PerformanceProfiler onReportPrepared={onReportPrepared}>
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Home"
@@ -52,7 +43,6 @@ function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
-    // </PerformanceProfiler>
   );
 }
 

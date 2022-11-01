@@ -35,6 +35,8 @@ const SignInScreen = ({navigation}) => {
       log.info('BEARER: ' + idToken);
 
       let startTime = new Date();
+      console.log("HMMM", startTime)
+      console.log("BACKEND", BACKEND_URL)
 
       const response = await axios.post(
         `${BACKEND_URL}/login`,

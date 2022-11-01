@@ -18,8 +18,11 @@ import {update, getTs, getCount, getNode} from '../store/hlc';
 import {toString, increment} from '../shared/hlcFunction';
 import {useDispatch} from 'react-redux';
 import HLC from '../shared/hlc';
+import SQLite from 'react-native-sqlite-2';
 
-var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
+
+// var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
+var db = SQLite.openDatabase('transactionDatabase.db')
 
 function EditScreen({route, navigation}) {
   const {

@@ -19,8 +19,12 @@ import {update, getTs, getCount, getNode} from '../store/hlc';
 import {toString, increment} from '../shared/hlcFunction';
 import {useDispatch} from 'react-redux';
 import HLC from '../shared/hlc';
+import SQLite from 'react-native-sqlite-2';
+import { loadDatabase } from '../repository/transaction';
 
-var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
+var db = SQLite.openDatabase('transactionDatabase.db');
+
+// var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
 
 function CreateScreen({navigation}) {
   const {
@@ -37,7 +41,9 @@ function CreateScreen({navigation}) {
   const node = useSelector(getNode);
   const dispatch = useDispatch();
 
-  const onSubmit = data => {
+  const onSubmit = async data => {
+    const loadDatabaseResponse = await loadDatabase()
+
     const hlc = new HLC(ts, node, count);
     const incrementResult = hlc.increment(
       Math.round(new Date().getTime() / 1000),
@@ -56,7 +62,7 @@ function CreateScreen({navigation}) {
         (tx, results) => {
           navigation.navigate('Home');
         },
-        error => console.log(error),
+        (_, error) => console.log("err", error),
       );
     });
   };

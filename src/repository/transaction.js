@@ -1,4 +1,5 @@
-import SQLite from 'react-native-sqlite-storage';
+// import SQLite from 'react-native-sqlite-storage';
+import SQLite from 'react-native-sqlite-2';
 
 const updateNullEmailInTable = async email => {
   var db = SQLite.openDatabase({
@@ -123,9 +124,27 @@ const deleteDatabase = async data => {
   });
 };
 
+const loadDatabase = async () => {
+  var db = SQLite.openDatabase('transactionDatabase.db');
+
+  return new Promise((resolve, reject) => {
+    db.transaction(txn => {
+      txn.executeSql(
+        'CREATE TABLE IF NOT EXISTS "table_event" ("id" INTEGER, "stream_id"	VARCHAR(36) NOT NULL, "data"	TEXT NOT NULL, "name"	VARCHAR(50) NOT NULL, "email"	VARCHAR(255), "hlc"	VARCHAR(100) NOT NULL, "sync_at"	INTEGER, PRIMARY KEY("id" AUTOINCREMENT) )',
+        [],
+        (tx, results) => {
+          resolve('success');
+        },
+        err => console.log('err', err),
+      );
+    });
+  });
+};
+
 export {
   updateNullEmailInTable,
   selectTransactionToBackend,
   saveSyncToDatabase,
   deleteDatabase,
+  loadDatabase,
 };
