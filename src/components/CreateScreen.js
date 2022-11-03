@@ -204,11 +204,12 @@ function CreateScreen({navigation}) {
   );
 }
 
-const makeStyles = () =>
+const makeStyles = colors =>
   StyleSheet.create({
     container: {
       flex: 1,
       padding: 15,
+      backgroundColor: colors.background,
     },
     col: {
       flexDirection: 'row',

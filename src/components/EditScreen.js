@@ -77,22 +77,6 @@ function EditScreen({route, navigation}) {
     if (insertResponse) {
       navigation.navigate('Home');
     }
-    // db.transaction(function (tx) {
-    //   tx.executeSql(
-    //     'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-    //     [
-    //       transactionId,
-    //       JSON.stringify(defaultData),
-    //       'DELETE_TRANSACTION',
-    //       email,
-    //       hlc.toString(),
-    //     ],
-    //     (tx, results) => {
-    //       navigation.navigate('Home');
-    //     },
-    //     error => console.log(error),
-    //   );
-    // });
   };
 
   const {colors} = useTheme();
@@ -269,11 +253,12 @@ function EditScreen({route, navigation}) {
   );
 }
 
-const makeStyles = () =>
+const makeStyles = colors =>
   StyleSheet.create({
     container: {
       flex: 1,
       padding: 15,
+      backgroundColor: colors.background,
     },
     col: {
       flexDirection: 'row',

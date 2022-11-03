@@ -27,7 +27,7 @@
     "react-native-dotenv": "^3.3.0",
     "react-native-get-random-values": "^1.7.1",
     "react-native-logs": "^4.0.1",
-    "react-native-paper": "^4.9.2",
+    "react-native-paper": "5.0.0-rc.8",
     "react-native-safe-area-context": "^3.3.2",
     "react-native-screens": "^3.9.0",
     "react-native-sqlite-2": "^3.6.1",

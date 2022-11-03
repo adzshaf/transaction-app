@@ -37,7 +37,11 @@ const SignInScreen = ({navigation}) => {
       const response = await axios.post(
         `${BACKEND_URL}/login`,
         {},
-        {headers: {Authorization: `Bearer ${idToken}`}},
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        },
       );
 
       log.info('STATUS: ' + response.status);
@@ -114,6 +118,7 @@ const makeStyles = colors =>
       padding: 15,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: colors.background,
     },
   });
 

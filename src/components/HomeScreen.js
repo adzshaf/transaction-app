@@ -63,8 +63,8 @@ function HomeScreen({navigation}) {
                       style={{
                         color:
                           item.type === 'Income'
-                            ? Colors.blue900
-                            : colors.notification,
+                            ? 'blue'
+                            : 'red',
                       }}>
                       Amount: {item.amount}
                     </Text>
@@ -78,6 +78,7 @@ function HomeScreen({navigation}) {
       )}
       <FAB
         style={styles.fab}
+        variant="primary"
         icon="plus"
         onPress={() => navigation.navigate('Create')}
       />
@@ -89,6 +90,7 @@ const makeStyles = colors =>
   StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: colors.background
     },
     col: {
       flexDirection: 'row',
@@ -104,7 +106,6 @@ const makeStyles = colors =>
       margin: 16,
       right: 0,
       bottom: 0,
-      backgroundColor: colors.notification,
     },
   });
 
