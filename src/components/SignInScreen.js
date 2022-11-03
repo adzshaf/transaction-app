@@ -13,6 +13,7 @@ import {fromString} from '../shared/hlcFunction';
 import {getTs, getCount, getNode, update} from '../store/hlc';
 import {saveSyncToDatabase} from '../repository/transaction';
 import {logger} from 'react-native-logs';
+import {login} from '../store/auth';
 
 const SignInScreen = ({navigation}) => {
   const {colors} = useTheme();

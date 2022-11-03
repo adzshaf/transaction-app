@@ -26,11 +26,11 @@ function HomeScreen({navigation}) {
 
   React.useEffect(() => {
     async function queryAllTransactions() {
-      const transactions = await queryAllTransactionByEmail(email)
-      setFlatListItems(transactions)
+      const transactions = await queryAllTransactionByEmail(email);
+      setFlatListItems(transactions);
     }
 
-    queryAllTransactions()
+    queryAllTransactions();
   }, [isFocused]);
 
   return (
@@ -61,10 +61,7 @@ function HomeScreen({navigation}) {
                   <View>
                     <Text
                       style={{
-                        color:
-                          item.type === 'Income'
-                            ? 'blue'
-                            : 'red',
+                        color: item.type === 'Income' ? '#338BA8' : '#FF5C5C',
                       }}>
                       Amount: {item.amount}
                     </Text>
@@ -90,7 +87,8 @@ const makeStyles = colors =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background
+      padding: 15,
+      backgroundColor: colors.surfaceVariant,
     },
     col: {
       flexDirection: 'row',
@@ -100,6 +98,7 @@ const makeStyles = colors =>
       padding: 15,
       marginBottom: 5,
       backgroundColor: colors.background,
+      borderRadius: 15,
     },
     fab: {
       position: 'absolute',
