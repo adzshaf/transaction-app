@@ -55,6 +55,10 @@ const saveSyncToDatabase = async data => {
         'DELETE FROM table_event',
         [],
         (tx, results) => {
+          if (data.length == 0) {
+            resolve('success');
+          }
+
           const chunkSize = 100;
           for (let i = 0; i < data.length; i += chunkSize) {
             let queryValue = [];

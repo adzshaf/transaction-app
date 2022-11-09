@@ -14,6 +14,7 @@ import {getTs, getCount, getNode, update} from '../store/hlc';
 import {saveSyncToDatabase} from '../repository/transaction';
 import {logger} from 'react-native-logs';
 import {login} from '../store/auth';
+import {startTimer} from '../store/timer';
 
 const SignInScreen = ({navigation}) => {
   const {colors} = useTheme();
@@ -34,6 +35,7 @@ const SignInScreen = ({navigation}) => {
       log.info('BEARER: ' + idToken);
 
       let startTime = new Date();
+      dispatch(startTimer());
 
       const response = await axios.post(
         `${BACKEND_URL}/login`,
@@ -78,7 +80,7 @@ const SignInScreen = ({navigation}) => {
         value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
       });
 
-      const saveToDb = saveSyncToDatabase(responseData);
+      const saveToDb = await saveSyncToDatabase(responseData);
       let endTime = new Date();
       let costTime = (endTime - startTime) / 1000;
 

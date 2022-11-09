@@ -1,6 +1,7 @@
 import {configureStore} from '@reduxjs/toolkit';
 import authReducer from './auth';
 import hlcReducer from './hlc';
+import timerReducer from './timer';
 import {combineReducers} from 'redux';
 import {
   persistReducer,
@@ -21,6 +22,7 @@ const persistConfig = {
 const reducers = combineReducers({
   auth: authReducer,
   hlc: hlcReducer,
+  timer: timerReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, reducers);

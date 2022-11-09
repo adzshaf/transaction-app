@@ -23,8 +23,6 @@ import {queryInsertTransaction} from '../repository/transaction';
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 
-var db = SQLite.openDatabase('transactionDatabase.db');
-
 function CreateScreen({navigation}) {
   const schema = yup.object().shape({
     date: yup.date(),

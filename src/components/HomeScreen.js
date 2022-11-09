@@ -5,14 +5,14 @@ import {
   Text,
   Subheading,
   useTheme,
-  Colors,
   ActivityIndicator,
 } from 'react-native-paper';
 import {getEmail} from '../store/auth';
-import {useSelector} from 'react-redux';
-
 import {useIsFocused} from '@react-navigation/native';
 import {queryAllTransactionByEmail} from '../repository/transaction';
+import {endTimer, getTime} from '../store/timer'
+import {useDispatch, useSelector} from 'react-redux'
+import {logger} from 'react-native-logs'
 
 function HomeScreen({navigation}) {
   const {colors} = useTheme();
@@ -22,20 +22,28 @@ function HomeScreen({navigation}) {
 
   const isFocused = useIsFocused();
 
-  const [flatListItems, setFlatListItems] = React.useState([]);
+  const [flatListItems, setFlatListItems] = React.useState(null);
+  const dispatch = useDispatch()
+  var log = logger.createLogger();
 
   React.useEffect(() => {
     async function queryAllTransactions() {
+      setIsLoading(true)
       const transactions = await queryAllTransactionByEmail(email);
       setFlatListItems(transactions);
+      setIsLoading(false)
     }
 
     queryAllTransactions();
+    dispatch(endTimer())
   }, [isFocused]);
+
+  const time = useSelector(getTime)
+  log.info('SYNC TIME (reducer): ' + time);
 
   return (
     <>
-      {isLoading ? (
+      {flatListItems === null ? (
         <ActivityIndicator />
       ) : (
         <FlatList
