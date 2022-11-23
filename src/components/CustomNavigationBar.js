@@ -36,7 +36,12 @@ function CustomNavigationBar({navigation, back}) {
   const node = useSelector(getNode);
 
   const syncData = async () => {
-    const data = await selectTransactionToBackend(email);
+    let data = await selectTransactionToBackend(email);
+
+    if (data.length == 0) {
+      data = []
+    }
+
     const response = await axios.post(
       `${BACKEND_URL}/sync`,
       {data: data},

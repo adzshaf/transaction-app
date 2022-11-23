@@ -55,7 +55,7 @@ function CreateScreen({navigation}) {
 
     const insertResponse = await queryInsertTransaction({
       id: uuidv4(),
-      data: JSON.stringify(data),
+      data: data,
       name: 'ADD_TRANSACTION',
       email: email,
       hlc: hlc.toString(),

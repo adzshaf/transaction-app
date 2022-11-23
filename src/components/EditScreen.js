@@ -58,7 +58,7 @@ function EditScreen({route, navigation}) {
 
     const insertResponse = await queryInsertTransaction({
       id: transactionId,
-      data: JSON.stringify(data),
+      data: data,
       name: 'EDIT_TRANSACTION',
       email: email,
       hlc: hlc.toString(),
@@ -78,7 +78,7 @@ function EditScreen({route, navigation}) {
 
     const insertResponse = await queryInsertTransaction({
       id: transactionId,
-      data: JSON.stringify(defaultData),
+      data: defaultData,
       name: 'DELETE_TRANSACTION',
       email: email,
       hlc: hlc.toString(),
