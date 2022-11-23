@@ -39,7 +39,7 @@ function CustomNavigationBar({navigation, back}) {
     let data = await selectTransactionToBackend(email);
 
     if (data.length == 0) {
-      data = []
+      data = [];
     }
 
     const response = await axios.post(
@@ -52,6 +52,24 @@ function CustomNavigationBar({navigation, back}) {
     let syncTs = ts;
     let syncCount = count;
     let syncNode = node;
+
+    responseData.sort((first, second) => {
+      let firstParsedValue = HLC.fromString(first.hlc);
+      let firstHlc = new HLC(
+        firstParsedValue.ts,
+        firstParsedValue.node,
+        firstParsedValue.count,
+      );
+
+      let secondParsedValue = HLC.fromString(second.hlc);
+      let secondHlc = new HLC(
+        secondParsedValue.ts,
+        secondParsedValue.node,
+        secondParsedValue.count,
+      );
+
+      return firstHlc.compare(secondHlc);
+    });
 
     responseData.map((value, index) => {
       // Melakukan parsing dari string HLC server dan membuat HLC berdasarkan hasil parsing
