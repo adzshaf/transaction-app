@@ -14,7 +14,7 @@ import {logout} from '../store/auth';
 import {
   selectTransactionToBackend,
   saveSyncToDatabase,
-  deleteDatabase,
+  deleteDatabaseTableEvent,
 } from '../repository/transaction';
 import {getTs, getCount, getNode, update} from '../store/hlc';
 import axios from 'axios';
@@ -35,25 +35,8 @@ function CustomNavigationBar({navigation, back}) {
   const count = useSelector(getCount);
   const node = useSelector(getNode);
 
-  const syncData = async () => {
-    let data = await selectTransactionToBackend(email);
-
-    if (data.length == 0) {
-      data = [];
-    }
-
-    const response = await axios.post(
-      `${BACKEND_URL}/sync`,
-      {data: data},
-      {headers: {Authorization: `Bearer ${token}`}},
-    );
-    const {data: responseData} = response.data;
-
-    let syncTs = ts;
-    let syncCount = count;
-    let syncNode = node;
-
-    responseData.sort((first, second) => {
+  const sortResponseByHlc = response => {
+    response.sort((first, second) => {
       let firstParsedValue = HLC.fromString(first.hlc);
       let firstHlc = new HLC(
         firstParsedValue.ts,
@@ -70,8 +53,13 @@ function CustomNavigationBar({navigation, back}) {
 
       return firstHlc.compare(secondHlc);
     });
+  };
 
-    responseData.map((value, index) => {
+  const parseHlcFromRemote = (response) => {
+    let syncTs = ts;
+    let syncCount = count;
+    let syncNode = node;
+    let responseData = response.map(value => {
       // Melakukan parsing dari string HLC server dan membuat HLC berdasarkan hasil parsing
       let {
         ts: remoteTs,
@@ -94,19 +82,42 @@ function CustomNavigationBar({navigation, back}) {
       syncNode = syncHlc.node;
 
       value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
+
+      return value;
     });
 
     // Melakukan pembaruan ts, count, dan node pada clock lokal yang disimpan di Redux
     dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
 
-    const saveToDb = saveSyncToDatabase(responseData);
+    return responseData
+  }
+
+  const syncData = async () => {
+    let data = await selectTransactionToBackend(email);
+
+    if (data.length == 0) {
+      data = [];
+    }
+
+    const response = await axios.post(
+      `${BACKEND_URL}/sync`,
+      {data: data},
+      {headers: {Authorization: `Bearer ${token}`}},
+    );
+    const {data: responseData} = response.data;
+
+    sortResponseByHlc(responseData)
+    let parsedResponse = parseHlcFromRemote(responseData)
+
+    await deleteDatabaseTableEvent();
+    await saveSyncToDatabase(parsedResponse);
     navigation.navigate('Home');
   };
 
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
-      const deleteDatabaseResponse = await deleteDatabase();
+      const deleteDatabaseResponse = await deleteDatabaseTableEvent();
       dispatch(logout());
       navigation.replace('Home');
     } catch (error) {

@@ -26,6 +26,63 @@ const SignInScreen = ({navigation}) => {
 
   var log = logger.createLogger();
 
+  const sortResponseByHlc = response => {
+    response.sort((first, second) => {
+      let firstParsedValue = HLC.fromString(first.hlc);
+      let firstHlc = new HLC(
+        firstParsedValue.ts,
+        firstParsedValue.node,
+        firstParsedValue.count,
+      );
+
+      let secondParsedValue = HLC.fromString(second.hlc);
+      let secondHlc = new HLC(
+        secondParsedValue.ts,
+        secondParsedValue.node,
+        secondParsedValue.count,
+      );
+
+      return firstHlc.compare(secondHlc);
+    });
+  };
+
+  const parseHlcFromRemote = response => {
+    let syncTs = ts;
+    let syncCount = count;
+    let syncNode = node;
+    let responseData = response.map(value => {
+      // Melakukan parsing dari string HLC server dan membuat HLC berdasarkan hasil parsing
+      let {
+        ts: remoteTs,
+        count: remoteCount,
+        node: remoteNode,
+      } = HLC.fromString(value.hlc);
+      let remoteHlc = new HLC(remoteTs, remoteNode, remoteCount);
+
+      // Membuat HLC dari data lokal
+      let localHlc = new HLC(syncTs, syncNode, syncCount);
+
+      // Melakukan operasi penerimaan event baru dari server pada HLC lokal
+      let syncHlc = localHlc.receive(
+        remoteHlc,
+        Math.round(new Date().getTime() / 1000),
+      );
+
+      syncTs = syncHlc.ts;
+      syncCount = syncHlc.count;
+      syncNode = syncHlc.node;
+
+      value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
+
+      return value;
+    });
+
+    // Melakukan pembaruan ts, count, dan node pada clock lokal yang disimpan di Redux
+    dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
+
+    return responseData;
+  };
+
   const signIn = async () => {
     try {
       await GoogleSignin.hasPlayServices();
@@ -51,54 +108,14 @@ const SignInScreen = ({navigation}) => {
 
       const {data: responseData} = response.data;
 
-      let syncTs = ts;
-      let syncCount = count;
-      let syncNode = node;
+      sortResponseByHlc(responseData);
+      let parsedResponse = parseHlcFromRemote(responseData);
+      await saveSyncToDatabase(parsedResponse);
 
-      responseData.sort((first, second) => {
-        let firstParsedValue = HLC.fromString(first.hlc);
-        let firstHlc = new HLC(firstParsedValue.ts, firstParsedValue.node, firstParsedValue.count)
-  
-  
-        let secondParsedValue = HLC.fromString(second.hlc);
-        let secondHlc = new HLC(secondParsedValue.ts, secondParsedValue.node, secondParsedValue.count)
-  
-        return firstHlc.compare(secondHlc)
-      });
-
-      responseData.map((value, index) => {
-        // Melakukan parsing dari string HLC server dan membuat HLC berdasarkan hasil parsing
-        let {
-          ts: remoteTs,
-          count: remoteCount,
-          node: remoteNode,
-        } = HLC.fromString(value.hlc);
-        let remoteHlc = new HLC(remoteTs, remoteNode, remoteCount);
-
-        // Membuat HLC dari data lokal
-        let localHlc = new HLC(syncTs, syncNode, syncCount);
-
-        // Melakukan operasi penerimaan event baru dari server pada HLC lokal
-        let syncHlc = localHlc.receive(
-          remoteHlc,
-          Math.round(new Date().getTime() / 1000),
-        );
-
-        syncTs = syncHlc.ts;
-        syncCount = syncHlc.count;
-        syncNode = syncHlc.node;
-
-        value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
-      });
-
-      const saveToDb = await saveSyncToDatabase(responseData);
       let endTime = new Date();
       let costTime = (endTime - startTime) / 1000;
 
       log.info('SYNC TIME: ' + costTime);
-
-      // Melakukan pembaruan ts, count, dan node pada clock lokal yang disimpan di Redux
-      dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
 
       dispatch(
         login({

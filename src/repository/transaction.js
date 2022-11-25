@@ -50,59 +50,49 @@ const saveSyncToDatabase = async data => {
   var db = SQLite.openDatabase('transactionDatabase.db');
 
   return new Promise((resolve, reject) => {
+    if (data.length == 0) {
+      resolve('success');
+    }
+
     db.transaction(txn => {
-      txn.executeSql(
-        'DELETE FROM table_event',
-        [],
-        (tx, results) => {
-          if (data.length == 0) {
+      const chunkSize = 100;
+      for (let i = 0; i < data.length; i += chunkSize) {
+        let queryValue = [];
+        let queryCommand = '';
+        const chunk = data.slice(i, i + chunkSize);
+
+        chunk.map((value, index) => {
+          queryValue.push(
+            value.email,
+            value.data,
+            value.stream_id,
+            value.hlc,
+            value.name,
+            value.sync_at,
+          );
+
+          queryCommand += '(?,?,?,?,?,?)';
+
+          if (index !== chunk.length - 1) {
+            queryCommand += ',';
+          }
+        });
+
+        txn.executeSql(
+          `INSERT INTO table_event (email, data, stream_id, hlc, name, sync_at) VALUES ${queryCommand}`,
+          queryValue,
+          (tx, results) => {
             resolve('success');
-          }
-
-          const chunkSize = 100;
-          for (let i = 0; i < data.length; i += chunkSize) {
-            let queryValue = [];
-            let queryCommand = '';
-            const chunk = data.slice(i, i + chunkSize);
-
-            chunk.map((value, index) => {
-              queryValue.push(
-                value.email,
-                value.data,
-                value.stream_id,
-                value.hlc,
-                value.name,
-                value.sync_at,
-              );
-
-              queryCommand += '(?,?,?,?,?,?)';
-
-              if (index !== chunk.length - 1) {
-                queryCommand += ',';
-              }
-            });
-
-            txn.executeSql(
-              `INSERT INTO table_event (email, data, stream_id, hlc, name, sync_at) VALUES ${queryCommand}`,
-              queryValue,
-              (tx, results) => {
-                resolve('success');
-              },
-              err => console.log('error insert', err),
-            );
-          }
-        },
-        err => console.log('error delete:', err),
-      );
+          },
+          err => console.log('error insert', err),
+        );
+      }
     });
   });
 };
 
-const deleteDatabase = async data => {
-  var db = SQLite.openDatabase({
-    name: 'transactionDatabase.db',
-    createFromLocation: 1,
-  });
+const deleteDatabaseTableEvent = async => {
+  var db = SQLite.openDatabase('transactionDatabase.db');
 
   return new Promise((resolve, reject) => {
     db.transaction(txn => {
@@ -191,7 +181,7 @@ export {
   updateNullEmailInTable,
   selectTransactionToBackend,
   saveSyncToDatabase,
-  deleteDatabase,
+  deleteDatabaseTableEvent,
   loadDatabase,
   queryAllTransactionByEmail,
   queryInsertTransaction,
