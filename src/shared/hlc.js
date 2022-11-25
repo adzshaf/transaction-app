@@ -70,11 +70,7 @@ class HLC {
 
   static fromString(str) {
     const [ts, count, ...node] = str.split(':');
-    return {
-      ts: parseInt(ts),
-      count: parseInt(count, 36),
-      node: node.join(':'),
-    };
+    return new HLC(parseInt(ts), node.join(), parseInt(count, 36));
   }
 }
 

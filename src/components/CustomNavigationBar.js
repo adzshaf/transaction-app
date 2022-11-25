@@ -37,19 +37,8 @@ function CustomNavigationBar({navigation, back}) {
 
   const sortResponseByHlc = response => {
     response.sort((first, second) => {
-      let firstParsedValue = HLC.fromString(first.hlc);
-      let firstHlc = new HLC(
-        firstParsedValue.ts,
-        firstParsedValue.node,
-        firstParsedValue.count,
-      );
-
-      let secondParsedValue = HLC.fromString(second.hlc);
-      let secondHlc = new HLC(
-        secondParsedValue.ts,
-        secondParsedValue.node,
-        secondParsedValue.count,
-      );
+      let firstHlc = HLC.fromString(first.hlc);
+      let secondHlc = HLC.fromString(second.hlc);
 
       return firstHlc.compare(secondHlc);
     });
@@ -60,13 +49,8 @@ function CustomNavigationBar({navigation, back}) {
     let syncCount = count;
     let syncNode = node;
     let responseData = response.map(value => {
-      // Melakukan parsing dari string HLC server dan membuat HLC berdasarkan hasil parsing
-      let {
-        ts: remoteTs,
-        count: remoteCount,
-        node: remoteNode,
-      } = HLC.fromString(value.hlc);
-      let remoteHlc = new HLC(remoteTs, remoteNode, remoteCount);
+      // Melakukan parsing dari string HLC server
+      let remoteHlc = HLC.fromString(value.hlc);
 
       // Membuat HLC dari data lokal
       let localHlc = new HLC(syncTs, syncNode, syncCount);
