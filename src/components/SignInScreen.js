@@ -39,24 +39,23 @@ const SignInScreen = ({navigation}) => {
     let syncTs = ts;
     let syncCount = count;
     let syncNode = node;
+    let localHlc;
+
     let responseData = response.map(value => {
       // Melakukan parsing dari string HLC peladen
       let remoteHlc = HLC.fromString(value.hlc);
 
       // Membuat HLC dari data lokal
-      let localHlc = new HLC(syncTs, syncNode, syncCount);
+      localHlc = new HLC(syncTs, syncNode, syncCount);
 
       // Melakukan operasi penerimaan event baru dari peladen pada HLC lokal
-      let syncHlc = localHlc.receive(
-        remoteHlc,
-        Math.round(new Date().getTime() / 1000),
-      );
+      localHlc.receive(remoteHlc);
 
-      syncTs = syncHlc.ts;
-      syncCount = syncHlc.count;
-      syncNode = syncHlc.node;
+      syncTs = localHlc.ts;
+      syncCount = localHlc.count;
+      syncNode = localHlc.node;
 
-      value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
+      value.hlc = localHlc.toString();
 
       return value;
     });

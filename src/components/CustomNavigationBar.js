@@ -44,37 +44,38 @@ function CustomNavigationBar({navigation, back}) {
     });
   };
 
-  const parseHlcFromRemote = (response) => {
+  const parseHlcFromRemote = response => {
     let syncTs = ts;
     let syncCount = count;
     let syncNode = node;
+    let localHlc;
+
     let responseData = response.map(value => {
       // Melakukan parsing dari string HLC server
       let remoteHlc = HLC.fromString(value.hlc);
 
       // Membuat HLC dari data lokal
-      let localHlc = new HLC(syncTs, syncNode, syncCount);
+      localHlc = new HLC(syncTs, syncNode, syncCount);
 
-      // Melakukan operasi penerimaan event baru dari server pada HLC lokal
-      let syncHlc = localHlc.receive(
-        remoteHlc,
-        Math.round(new Date().getTime() / 1000),
-      );
+      // Melakukan operasi penerimaan event baru dari peladen pada HLC lokal
+      localHlc.receive(remoteHlc);
 
-      syncTs = syncHlc.ts;
-      syncCount = syncHlc.count;
-      syncNode = syncHlc.node;
+      syncTs = localHlc.ts;
+      syncCount = localHlc.count;
+      syncNode = localHlc.node;
 
-      value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
+      value.hlc = localHlc.toString();
 
       return value;
     });
 
     // Melakukan pembaruan ts, count, dan node pada clock lokal yang disimpan di Redux
-    dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
+    dispatch(
+      update({ts: localHlc.ts, count: localHlc.count, node: localHlc.node}),
+    );
 
-    return responseData
-  }
+    return responseData;
+  };
 
   const syncData = async () => {
     let data = await selectTransactionToBackend(email);
@@ -90,8 +91,8 @@ function CustomNavigationBar({navigation, back}) {
     );
     const {data: responseData} = response.data;
 
-    sortResponseByHlc(responseData)
-    let parsedResponse = parseHlcFromRemote(responseData)
+    sortResponseByHlc(responseData);
+    let parsedResponse = parseHlcFromRemote(responseData);
 
     await deleteDatabaseTableEvent();
     await saveSyncToDatabase(parsedResponse);

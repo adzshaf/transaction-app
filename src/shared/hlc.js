@@ -5,16 +5,15 @@ class HLC {
     this.node = node;
   }
 
-  increment(now) {
+  increment() {
+    let now = Math.round(new Date().getTime() / 1000)
     if (now > this.ts) {
       this.ts = now;
       this.count = 0;
       this.node = this.node;
-      return {ts: now, count: 0, node: this.node};
+    } else {
+      this.count = this.count + 1;
     }
-
-    this.count = this.count + 1;
-    return {ts: this.ts, count: this.count, node: this.node};
   }
 
   compare(other) {
@@ -30,31 +29,21 @@ class HLC {
     return this.ts - other.ts;
   }
 
-  receive(remote, now) {
+  receive(remote) {
+    let now = Math.round(new Date().getTime() / 1000)
     if (now > this.ts && now > remote.ts) {
       this.ts = now;
       this.count = 0;
-      return {ts: now, count: 0, node: this.node};
-    }
+      return
+    } 
 
     if (this.ts == remote.ts) {
       this.count = Math.max(this.count, remote.count) + 1;
-      return {
-        ts: this.ts,
-        count: this.count,
-        node: this.node,
-      };
     } else if (this.ts > remote.ts) {
       this.count = this.count + 1;
-      return {ts: this.ts, count: this.count, node: this.node};
     } else {
       this.ts = remote.ts;
       this.count = remote.count + 1;
-      return {
-        ts: remote.ts,
-        count: this.count,
-        node: this.node,
-      };
     }
   }
 

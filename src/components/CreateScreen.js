@@ -48,10 +48,8 @@ function CreateScreen({navigation}) {
 
   const onSubmit = async data => {
     const hlc = new HLC(ts, node, count);
-    const incrementResult = hlc.increment(
-      Math.round(new Date().getTime() / 1000),
-    );
-    dispatch(update(incrementResult));
+    hlc.increment()
+    dispatch(update({ts: hlc.ts, count: hlc.count, node: hlc.node}));
 
     const insertResponse = await queryInsertTransaction({
       id: uuidv4(),
