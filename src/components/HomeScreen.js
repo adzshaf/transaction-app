@@ -5,16 +5,14 @@ import {
   Text,
   Subheading,
   useTheme,
-  Colors,
   ActivityIndicator,
 } from 'react-native-paper';
-import {openDatabase} from 'react-native-sqlite-storage';
 import {getEmail} from '../store/auth';
-import {useSelector} from 'react-redux';
-
 import {useIsFocused} from '@react-navigation/native';
-
-var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
+import {queryAllTransactionByEmail} from '../repository/transaction';
+import {endTimer, getTime} from '../store/timer'
+import {useDispatch, useSelector} from 'react-redux'
+import {logger} from 'react-native-logs'
 
 function HomeScreen({navigation}) {
   const {colors} = useTheme();
@@ -24,37 +22,28 @@ function HomeScreen({navigation}) {
 
   const isFocused = useIsFocused();
 
-  const [flatListItems, setFlatListItems] = React.useState([]);
+  const [flatListItems, setFlatListItems] = React.useState(null);
+  const dispatch = useDispatch()
+  var log = logger.createLogger();
 
   React.useEffect(() => {
-    db.transaction(function (txn) {
-      txn.executeSql(
-        "SELECT id, stream_id, JSON_EXTRACT(data, '$') from table_event \
-        WHERE email = ? AND (stream_id, hlc) in (SELECT stream_id, max(hlc) FROM table_event GROUP BY stream_id) \
-        AND stream_id NOT IN (SELECT stream_id FROM table_event WHERE name == 'DELETE_TRANSACTION')\
-        ORDER BY JSON_EXTRACT(data, '$.date') DESC",
-        [email],
-        (tx, results) => {
-          let responseData = [];
-          for (let i = 0; i < results.rows.length; ++i) {
-            let data = JSON.parse(
-              results.rows.item(i)["JSON_EXTRACT(data, '$')"],
-            );
-            data['stream_id'] = results.rows.item(i)['stream_id'];
-            data['id'] = results.rows.item(i)['id'];
-            responseData.push(data);
-          }
-          setFlatListItems(responseData);
-          // setIsLoading(false);
-        },
-        error => console.log(error),
-      );
-    });
+    async function queryAllTransactions() {
+      setIsLoading(true)
+      const transactions = await queryAllTransactionByEmail(email);
+      setFlatListItems(transactions);
+      setIsLoading(false)
+      dispatch(endTimer())
+    }
+
+    queryAllTransactions();
   }, [isFocused]);
+
+  const time = useSelector(getTime)
+  log.info('SYNC TIME (reducer): ' + time);
 
   return (
     <>
-      {isLoading ? (
+      {flatListItems === null ? (
         <ActivityIndicator />
       ) : (
         <FlatList
@@ -80,10 +69,7 @@ function HomeScreen({navigation}) {
                   <View>
                     <Text
                       style={{
-                        color:
-                          item.type === 'Income'
-                            ? Colors.blue900
-                            : colors.notification,
+                        color: item.type === 'Income' ? '#338BA8' : '#FF5C5C',
                       }}>
                       Amount: {item.amount}
                     </Text>
@@ -97,6 +83,7 @@ function HomeScreen({navigation}) {
       )}
       <FAB
         style={styles.fab}
+        variant="primary"
         icon="plus"
         onPress={() => navigation.navigate('Create')}
       />
@@ -108,6 +95,8 @@ const makeStyles = colors =>
   StyleSheet.create({
     container: {
       flex: 1,
+      padding: 15,
+      backgroundColor: colors.surfaceVariant,
     },
     col: {
       flexDirection: 'row',
@@ -117,13 +106,13 @@ const makeStyles = colors =>
       padding: 15,
       marginBottom: 5,
       backgroundColor: colors.background,
+      borderRadius: 15,
     },
     fab: {
       position: 'absolute',
       margin: 16,
       right: 0,
       bottom: 0,
-      backgroundColor: colors.notification,
     },
   });
 

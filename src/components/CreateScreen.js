@@ -9,7 +9,6 @@ import {
   Button,
 } from 'react-native-paper';
 import {useForm, Controller} from 'react-hook-form';
-import {openDatabase} from 'react-native-sqlite-storage';
 import DatePicker from 'react-native-date-picker';
 import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
@@ -19,17 +18,27 @@ import {update, getTs, getCount, getNode} from '../store/hlc';
 import {toString, increment} from '../shared/hlcFunction';
 import {useDispatch} from 'react-redux';
 import HLC from '../shared/hlc';
-
-var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
+import SQLite from 'react-native-sqlite-2';
+import {queryInsertTransaction} from '../repository/transaction';
+import * as yup from 'yup';
+import {yupResolver} from '@hookform/resolvers/yup';
 
 function CreateScreen({navigation}) {
+  const schema = yup.object().shape({
+    date: yup.date(),
+    amount: yup.number().positive().integer().required('Required'),
+    type: yup.string().required('Required'),
+    category: yup.string().required('Required'),
+    note: yup.string(),
+  });
+
   const {
     control,
     register,
     handleSubmit,
     watch,
     formState: {errors},
-  } = useForm();
+  } = useForm({resolver: yupResolver(schema)});
 
   const email = useSelector(getEmail);
   const ts = useSelector(getTs);
@@ -37,28 +46,22 @@ function CreateScreen({navigation}) {
   const node = useSelector(getNode);
   const dispatch = useDispatch();
 
-  const onSubmit = data => {
+  const onSubmit = async data => {
     const hlc = new HLC(ts, node, count);
-    const incrementResult = hlc.increment(
-      Math.round(new Date().getTime() / 1000),
-    );
-    dispatch(update(incrementResult));
-    db.transaction(function (tx) {
-      tx.executeSql(
-        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-        [
-          uuidv4(),
-          JSON.stringify(data),
-          'ADD_TRANSACTION',
-          email,
-          hlc.toString(),
-        ],
-        (tx, results) => {
-          navigation.navigate('Home');
-        },
-        error => console.log(error),
-      );
+    hlc.increment()
+    dispatch(update({ts: hlc.ts, count: hlc.count, node: hlc.node}));
+
+    const insertResponse = await queryInsertTransaction({
+      id: uuidv4(),
+      data: data,
+      name: 'ADD_TRANSACTION',
+      email: email,
+      hlc: hlc.toString(),
     });
+
+    if (insertResponse) {
+      navigation.navigate('Home');
+    }
   };
 
   const {colors} = useTheme();
@@ -99,6 +102,9 @@ function CreateScreen({navigation}) {
         name="date"
         defaultValue=""
       />
+      {errors?.date?.message && (
+        <Text style={{color: colors.error}}>{errors.date.message}</Text>
+      )}
       <Controller
         control={control}
         rules={{
@@ -109,15 +115,19 @@ function CreateScreen({navigation}) {
             <TextInput
               style={styles.input}
               onBlur={onBlur}
-              onChangeText={value => onChange(value)}
+              onChangeText={text => onChange(text)}
               value={value}
               label="Amount"
+              keyboardType="number-pad"
             />
           );
         }}
         name="amount"
-        defaultValue=""
+        defaultValue="0"
       />
+      {errors?.amount?.message && (
+        <Text style={{color: colors.error}}>{errors.amount.message}</Text>
+      )}
       <View style={styles.row}>
         <Caption>Type</Caption>
         <Controller
@@ -141,6 +151,9 @@ function CreateScreen({navigation}) {
           )}
           name="type"
         />
+        {errors?.type?.message && (
+          <Text style={{color: colors.error}}>{errors.type.message}</Text>
+        )}
       </View>
       <View style={styles.row}>
         <Caption>Category</Caption>
@@ -173,6 +186,9 @@ function CreateScreen({navigation}) {
           )}
           name="category"
         />
+        {errors?.category?.message && (
+          <Text style={{color: colors.error}}>{errors.category.message}</Text>
+        )}
       </View>
       <Controller
         control={control}
@@ -204,11 +220,12 @@ function CreateScreen({navigation}) {
   );
 }
 
-const makeStyles = () =>
+const makeStyles = colors =>
   StyleSheet.create({
     container: {
       flex: 1,
       padding: 15,
+      backgroundColor: colors.background,
     },
     col: {
       flexDirection: 'row',

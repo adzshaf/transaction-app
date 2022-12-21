@@ -18,17 +18,30 @@ import {update, getTs, getCount, getNode} from '../store/hlc';
 import {toString, increment} from '../shared/hlcFunction';
 import {useDispatch} from 'react-redux';
 import HLC from '../shared/hlc';
+import SQLite from 'react-native-sqlite-2';
+import {queryInsertTransaction} from '../repository/transaction';
+import * as yup from 'yup';
+import {yupResolver} from '@hookform/resolvers/yup';
 
-var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
+// var db = openDatabase({name: 'transactionDatabase.db', createFromLocation: 1});
+var db = SQLite.openDatabase('transactionDatabase.db');
 
 function EditScreen({route, navigation}) {
+  const schema = yup.object().shape({
+    date: yup.date(),
+    amount: yup.number().positive().integer().required('Required'),
+    type: yup.string().required('Required'),
+    category: yup.string().required('Required'),
+    note: yup.string(),
+  });
+
   const {
     control,
     register,
     handleSubmit,
     watch,
     formState: {errors},
-  } = useForm();
+  } = useForm({resolver: yupResolver(schema)});
 
   const email = useSelector(getEmail);
   const ts = useSelector(getTs);
@@ -36,51 +49,40 @@ function EditScreen({route, navigation}) {
   const node = useSelector(getNode);
   const dispatch = useDispatch();
 
-  const onSubmit = data => {
+  const onSubmit = async data => {
     const hlc = new HLC(ts, node, count);
-    const incrementResult = hlc.increment(
-      Math.round(new Date().getTime() / 1000),
-    );
-    dispatch(update(incrementResult));
-    db.transaction(function (tx) {
-      tx.executeSql(
-        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-        [
-          transactionId,
-          JSON.stringify(data),
-          'EDIT_TRANSACTION',
-          email,
-          hlc.toString(),
-        ],
-        (tx, results) => {
-          navigation.navigate('Home');
-        },
-      );
+    hlc.increment();
+    dispatch(update({ts: hlc.ts, count: hlc.count, node: hlc.node}));
+
+    const insertResponse = await queryInsertTransaction({
+      id: transactionId,
+      data: data,
+      name: 'EDIT_TRANSACTION',
+      email: email,
+      hlc: hlc.toString(),
     });
+
+    if (insertResponse) {
+      navigation.navigate('Home');
+    }
   };
 
-  const deleteTransaction = defaultData => {
+  const deleteTransaction = async defaultData => {
     const hlc = new HLC(ts, node, count);
-    const incrementResult = hlc.increment(
-      Math.round(new Date().getTime() / 1000),
-    );
-    dispatch(update(incrementResult));
-    db.transaction(function (tx) {
-      tx.executeSql(
-        'INSERT INTO table_event (stream_id, data, name, email, hlc) VALUES (?,?,?,?,?)',
-        [
-          transactionId,
-          JSON.stringify(defaultData),
-          'DELETE_TRANSACTION',
-          email,
-          hlc.toString(),
-        ],
-        (tx, results) => {
-          navigation.navigate('Home');
-        },
-        error => console.log(error),
-      );
+    hlc.increment();
+    dispatch(update({ts: hlc.ts, count: hlc.count, node: hlc.node}));
+
+    const insertResponse = await queryInsertTransaction({
+      id: transactionId,
+      data: defaultData,
+      name: 'DELETE_TRANSACTION',
+      email: email,
+      hlc: hlc.toString(),
     });
+
+    if (insertResponse) {
+      navigation.navigate('Home');
+    }
   };
 
   const {colors} = useTheme();
@@ -147,6 +149,9 @@ function EditScreen({route, navigation}) {
         name="date"
         defaultValue={defaultData.date}
       />
+      {errors?.date?.message && (
+        <Text style={{color: colors.error}}>{errors.date.message}</Text>
+      )}
       <Controller
         control={control}
         rules={{
@@ -166,6 +171,9 @@ function EditScreen({route, navigation}) {
         name="amount"
         defaultValue={defaultData.amount.toString()}
       />
+      {errors?.amount?.message && (
+        <Text style={{color: colors.error}}>{errors.amount.message}</Text>
+      )}
       <View style={styles.row}>
         <Caption>Type</Caption>
         <Controller
@@ -190,6 +198,9 @@ function EditScreen({route, navigation}) {
           name="type"
           defaultValue={defaultData.type}
         />
+        {errors?.type?.message && (
+          <Text style={{color: colors.error}}>{errors.type.message}</Text>
+        )}
       </View>
       <View style={styles.row}>
         <Caption>Category</Caption>
@@ -223,6 +234,9 @@ function EditScreen({route, navigation}) {
           name="category"
           defaultValue={defaultData.category}
         />
+        {errors?.category?.message && (
+          <Text style={{color: colors.error}}>{errors.category.message}</Text>
+        )}
       </View>
       <Controller
         control={control}
@@ -257,11 +271,12 @@ function EditScreen({route, navigation}) {
   );
 }
 
-const makeStyles = () =>
+const makeStyles = colors =>
   StyleSheet.create({
     container: {
       flex: 1,
       padding: 15,
+      backgroundColor: colors.background,
     },
     col: {
       flexDirection: 'row',

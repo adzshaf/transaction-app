@@ -14,7 +14,7 @@ import {logout} from '../store/auth';
 import {
   selectTransactionToBackend,
   saveSyncToDatabase,
-  deleteDatabase,
+  deleteDatabaseTableEvent,
 } from '../repository/transaction';
 import {getTs, getCount, getNode, update} from '../store/hlc';
 import axios from 'axios';
@@ -35,8 +35,55 @@ function CustomNavigationBar({navigation, back}) {
   const count = useSelector(getCount);
   const node = useSelector(getNode);
 
+  const sortResponseByHlc = response => {
+    response.sort((first, second) => {
+      let firstHlc = HLC.fromString(first.hlc);
+      let secondHlc = HLC.fromString(second.hlc);
+
+      return firstHlc.compare(secondHlc);
+    });
+  };
+
+  const parseHlcFromRemote = response => {
+    let syncTs = ts;
+    let syncCount = count;
+    let syncNode = node;
+    let localHlc;
+
+    let responseData = response.map(value => {
+      // Melakukan parsing dari string HLC server
+      let remoteHlc = HLC.fromString(value.hlc);
+
+      // Membuat HLC dari data lokal
+      localHlc = new HLC(syncTs, syncNode, syncCount);
+
+      // Melakukan operasi penerimaan event baru dari peladen pada HLC lokal
+      localHlc.receive(remoteHlc);
+
+      syncTs = localHlc.ts;
+      syncCount = localHlc.count;
+      syncNode = localHlc.node;
+
+      value.hlc = localHlc.toString();
+
+      return value;
+    });
+
+    // Melakukan pembaruan ts, count, dan node pada clock lokal yang disimpan di Redux
+    dispatch(
+      update({ts: localHlc.ts, count: localHlc.count, node: localHlc.node}),
+    );
+
+    return responseData;
+  };
+
   const syncData = async () => {
-    const data = await selectTransactionToBackend(email);
+    let data = await selectTransactionToBackend(email);
+
+    if (data.length == 0) {
+      data = [];
+    }
+
     const response = await axios.post(
       `${BACKEND_URL}/sync`,
       {data: data},
@@ -44,46 +91,18 @@ function CustomNavigationBar({navigation, back}) {
     );
     const {data: responseData} = response.data;
 
-    let syncTs = ts;
-    let syncCount = count;
-    let syncNode = node;
+    sortResponseByHlc(responseData);
+    let parsedResponse = parseHlcFromRemote(responseData);
 
-    responseData.map((value, index) => {
-      // Melakukan parsing dari string HLC server dan membuat HLC berdasarkan hasil parsing
-      let {
-        ts: remoteTs,
-        count: remoteCount,
-        node: remoteNode,
-      } = HLC.fromString(value.hlc);
-      let remoteHlc = new HLC(remoteTs, remoteNode, remoteCount);
-
-      // Membuat HLC dari data lokal
-      let localHlc = new HLC(syncTs, syncNode, syncCount);
-
-      // Melakukan operasi penerimaan event baru dari server pada HLC lokal
-      let syncHlc = localHlc.receive(
-        remoteHlc,
-        Math.round(new Date().getTime() / 1000),
-      );
-
-      syncTs = syncHlc.ts;
-      syncCount = syncHlc.count;
-      syncNode = syncHlc.node;
-
-      value.hlc = new HLC(syncTs, syncNode, syncCount).toString();
-    });
-
-    // Melakukan pembaruan ts, count, dan node pada clock lokal yang disimpan di Redux
-    dispatch(update({ts: syncTs, count: syncCount, node: syncNode}));
-
-    const saveToDb = saveSyncToDatabase(responseData);
-    navigation.navigate('Home');
+    await deleteDatabaseTableEvent();
+    await saveSyncToDatabase(parsedResponse);
+    navigation.push('Home');
   };
 
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
-      const deleteDatabaseResponse = await deleteDatabase();
+      const deleteDatabaseResponse = await deleteDatabaseTableEvent();
       dispatch(logout());
       navigation.replace('Home');
     } catch (error) {
@@ -98,7 +117,7 @@ function CustomNavigationBar({navigation, back}) {
       <Menu
         visible={visible}
         onDismiss={closeMenu}
-        anchor={<Appbar.Action icon="menu" color="white" onPress={openMenu} />}>
+        anchor={<Appbar.Action icon="menu" onPress={openMenu} />}>
         {loggedIn ? (
           <Menu.Item title="Sync" onPress={() => syncData()} />
         ) : (
