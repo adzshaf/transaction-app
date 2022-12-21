@@ -32,10 +32,10 @@ function HomeScreen({navigation}) {
       const transactions = await queryAllTransactionByEmail(email);
       setFlatListItems(transactions);
       setIsLoading(false)
+      dispatch(endTimer())
     }
 
     queryAllTransactions();
-    dispatch(endTimer())
   }, [isFocused]);
 
   const time = useSelector(getTime)

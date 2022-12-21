@@ -96,7 +96,7 @@ function CustomNavigationBar({navigation, back}) {
 
     await deleteDatabaseTableEvent();
     await saveSyncToDatabase(parsedResponse);
-    navigation.navigate('Home');
+    navigation.push('Home');
   };
 
   const signOut = async () => {
